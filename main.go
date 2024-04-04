@@ -26,7 +26,7 @@ func main() {
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hi you requested the following endpoint: %s\n", r.URL.Path)
-	})
+	}).Methods("GET")
 
 	r.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		userid := If(r.URL.Query().Has("id"), r.URL.Query().Get("id"), "null")
