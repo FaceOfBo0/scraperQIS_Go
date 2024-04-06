@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"text/template"
 
 	"github.com/gorilla/mux"
 )
@@ -13,7 +14,23 @@ type Book struct {
 	Pages  int    `json:"pages"`
 }
 
-func If[T any](cond bool, vtrue, vfalse T) T {
+type ContactDetails struct {
+	Email   string
+	Subject string
+	Message string
+}
+
+type Todo struct {
+	Title string
+	Done  bool
+}
+
+type TodoPageData struct {
+	PageTitle string
+	Todos     []Todo
+}
+
+func Tern[T any](cond bool, vtrue, vfalse T) T {
 	if cond {
 		return vtrue
 	}
@@ -21,15 +38,35 @@ func If[T any](cond bool, vtrue, vfalse T) T {
 }
 
 func main() {
+
+	tmpl_todo := template.Must(template.ParseFiles("templates/todos.html"))
+
 	fmt.Println("hello Server")
 	r := mux.NewRouter()
+
+	r.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+
+	r.HandleFunc("/todos", func(wrt http.ResponseWriter, req *http.Request) {
+		dataTodo := TodoPageData{
+			PageTitle: "My TODO list",
+			Todos: []Todo{
+				{Title: "Task 1", Done: false},
+				{Title: "Task 2", Done: false},
+				{Title: "Task 3", Done: false},
+			},
+		}
+
+		tmpl_todo.Execute(wrt, dataTodo)
+	})
 
 	r.HandleFunc("/", func(wrt http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(wrt, "Hi you requested the following endpoint: %s\n", req.URL.Path)
 	}).Methods("GET")
 
 	r.HandleFunc("/hello", func(wrt http.ResponseWriter, req *http.Request) {
-		userid := If(req.URL.Query().Has("id"), req.URL.Query().Get("id"), "null")
+		userid := Tern(req.URL.Query().Has("id"), req.URL.Query().Get("id"), "null")
 		println(userid)
 		wrt.Header().Set("Content-Type", "text/html")
 		wrt.Write([]byte("<html><h2>Hello</h2></html>"))
@@ -44,7 +81,6 @@ func main() {
 	})
 
 	fs := http.FileServer(http.Dir("static/"))
-	//http.Handle("/static/", http.StripPrefix("/static/", fs))
-	r.Handle("/static", http.StripPrefix("/static", fs))
+	r.Handle("/statics", http.StripPrefix("/statics", fs))
 	http.ListenAndServe(":5000", r)
 }
