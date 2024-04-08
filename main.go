@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
 
 type Book struct {
@@ -33,6 +34,21 @@ type TodoPageData struct {
 }
 
 type Middleware func(http.HandlerFunc) http.HandlerFunc
+
+var (
+	key   = []byte("super-secret-key")
+	store = sessions.NewCookieStore(key)
+)
+
+func secret(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "cooke-name")
+	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
+	fmt.Fprintln(w, "The cake is a lie!")
+}
 
 func Method(meth string) Middleware {
 	return func(hf http.HandlerFunc) http.HandlerFunc {
