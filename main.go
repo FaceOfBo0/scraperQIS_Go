@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -30,6 +32,38 @@ type TodoPageData struct {
 	Todos     []Todo
 }
 
+type Middleware func(http.HandlerFunc) http.HandlerFunc
+
+func Method(meth string) Middleware {
+	return func(hf http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != meth {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+			hf(w, r)
+		}
+	}
+}
+
+func Logging() Middleware {
+	return func(hf http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			defer func() { log.Println(r.URL.Path, time.Since(start)) }()
+
+			hf(w, r)
+		}
+	}
+}
+
+func Chain(hf http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
+	for _, m := range middlewares {
+		hf = m(hf)
+	}
+	return hf
+}
+
 func Tern[T any](cond bool, vtrue, vfalse T) T {
 	if cond {
 		return vtrue
@@ -37,15 +71,26 @@ func Tern[T any](cond bool, vtrue, vfalse T) T {
 	return vfalse
 }
 
+// func logMiddleware(hf http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		log.Println(r.URL.Path)
+// 		hf.ServeHTTP(w, r)
+// 	})
+// }
+
+// func logging(hf http.HandlerFunc) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		log.Println(r.URL.Path)
+// 		hf(w, r)
+// 	}
+// }
+
 func main() {
 
 	tmpl_todo := template.Must(template.ParseFiles("templates/todos.html"))
 	tmpl_form := template.Must(template.ParseFiles("templates/forms.html"))
 
-	fmt.Println("hello Server")
-	r := mux.NewRouter()
-
-	r.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
+	formRoute := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			tmpl_form.Execute(w, nil)
 			return
@@ -60,9 +105,9 @@ func main() {
 		fmt.Println(details)
 
 		tmpl_form.Execute(w, struct{ Success bool }{true})
-	})
+	}
 
-	r.HandleFunc("/todos", func(wrt http.ResponseWriter, req *http.Request) {
+	todoRoute := func(wrt http.ResponseWriter, req *http.Request) {
 		dataTodo := TodoPageData{
 			PageTitle: "My TODO list",
 			Todos: []Todo{
@@ -73,15 +118,21 @@ func main() {
 		}
 
 		tmpl_todo.Execute(wrt, dataTodo)
-	})
+	}
+
+	fmt.Println("hello Server")
+	r := mux.NewRouter()
+
+	r.HandleFunc("/form", Chain(formRoute, Method("GET"), Logging()))
+	r.HandleFunc("/todos", Chain(todoRoute, Method("GET"), Logging()))
 
 	r.HandleFunc("/", func(wrt http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(wrt, "Hi you requested the following endpoint: %s\n", req.URL.Path)
 	}).Methods("GET")
 
 	r.HandleFunc("/hello", func(wrt http.ResponseWriter, req *http.Request) {
-		userid := Tern(req.URL.Query().Has("id"), req.URL.Query().Get("id"), "null")
-		println(userid)
+		//userid := Tern(req.URL.Query().Has("id"), req.URL.Query().Get("id"), "null")
+		//println(userid)
 		wrt.Header().Set("Content-Type", "text/html")
 		wrt.Write([]byte("<html><h2>Hello</h2></html>"))
 	})
@@ -96,5 +147,6 @@ func main() {
 
 	fs := http.FileServer(http.Dir("static/"))
 	r.Handle("/statics", http.StripPrefix("/statics", fs))
+	//r.Use(logMiddleware)
 	http.ListenAndServe(":5000", r)
 }
