@@ -40,12 +40,26 @@ func Tern[T any](cond bool, vtrue, vfalse T) T {
 func main() {
 
 	tmpl_todo := template.Must(template.ParseFiles("templates/todos.html"))
+	tmpl_form := template.Must(template.ParseFiles("templates/forms.html"))
 
 	fmt.Println("hello Server")
 	r := mux.NewRouter()
 
 	r.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			tmpl_form.Execute(w, nil)
+			return
+		}
 
+		details := ContactDetails{
+			Email:   r.FormValue("email"),
+			Subject: r.FormValue("subject"),
+			Message: r.FormValue("message"),
+		}
+
+		fmt.Println(details)
+
+		tmpl_form.Execute(w, struct{ Success bool }{true})
 	})
 
 	r.HandleFunc("/todos", func(wrt http.ResponseWriter, req *http.Request) {
