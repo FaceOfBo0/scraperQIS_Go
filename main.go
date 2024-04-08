@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -40,14 +41,46 @@ var (
 	store = sessions.NewCookieStore(key)
 )
 
+func authMiddleware() Middleware {
+	return func(hf http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			session, _ := store.Get(r, "cookie-name")
+			if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			hf(w, r)
+		}
+	}
+}
+
 func secret(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "cooke-name")
+	session, _ := store.Get(r, "cookie-name")
 	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
 
 	fmt.Fprintln(w, "The cake is a lie!")
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "cookie-name")
+
+	//Authentication methods...
+
+	session.Values["authenticated"] = true
+	sessions.Save(r, w)
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "cookie-name")
+
+	//Revoke authentication
+	session.Values["authenticated"] = false
+	session.Save(r, w)
+
 }
 
 func Method(meth string) Middleware {
@@ -139,8 +172,11 @@ func main() {
 	fmt.Println("hello Server")
 	r := mux.NewRouter()
 
-	r.HandleFunc("/form", Chain(formRoute, Method("GET"), Logging()))
-	r.HandleFunc("/todos", Chain(todoRoute, Method("GET"), Logging()))
+	r.HandleFunc("/logout", Chain(logout, Logging()))
+	r.HandleFunc("/login", Chain(login, Logging()))
+	r.HandleFunc("/secret", Chain(secret, Logging()))
+	r.HandleFunc("/form", Chain(formRoute, authMiddleware(), Logging()))
+	r.HandleFunc("/todos", Chain(todoRoute, Method("GET"), authMiddleware(), Logging()))
 
 	r.HandleFunc("/", func(wrt http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(wrt, "Hi you requested the following endpoint: %s\n", req.URL.Path)
@@ -161,8 +197,24 @@ func main() {
 		fmt.Fprintf(wrt, "You've requested the book: %s on page %s\n", title, page)
 	})
 
+	r.HandleFunc("/decode", func(w http.ResponseWriter, r *http.Request) {
+		var book Book
+		json.NewDecoder(r.Body).Decode(&book)
+
+		fmt.Fprintf(w, "%s is written by %s with %d pages.\n", book.Title, book.Author, book.Pages)
+	})
+
+	r.HandleFunc("/encode", func(w http.ResponseWriter, r *http.Request) {
+		book := Book{
+			Author: "Goethe",
+			Title:  "Faust",
+			Pages:  683,
+		}
+
+		json.NewEncoder(w).Encode(book)
+	})
+
 	fs := http.FileServer(http.Dir("static/"))
 	r.Handle("/statics", http.StripPrefix("/statics", fs))
-	//r.Use(logMiddleware)
 	http.ListenAndServe(":5000", r)
 }
