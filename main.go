@@ -1,7 +1,9 @@
 package main
 
+import "fmt"
+
 func main() {
-	lec := NewLecture("re", "re")
-	println(lec)
-	RunTutServer()
+	lec := newLecture("re", "re")
+	fmt.Println(lec)
+	//RunTutServer()
 }
