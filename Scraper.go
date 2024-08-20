@@ -24,10 +24,22 @@ func getHtmlText(url string) string {
 type Scraper struct {
 	lecturesLinks []string
 	offset        string
+	lectures      []*Lecture
 }
 
 func newScraper(offset string) *Scraper {
 	return &Scraper{offset: offset}
+}
+
+func (s *Scraper) getLectures() []*Lecture {
+
+	if s.lectures == nil {
+		s.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
+		for _, elem := range s.lecturesLinks {
+			s.lectures = append(s.lectures, newLecture(s.getLectureText(elem)))
+		}
+	}
+	return s.lectures
 }
 
 func (s *Scraper) getLectureText(url string) string {

@@ -20,12 +20,12 @@ func newLecture(text string) *Lecture {
 	//  initialize Lecture with RegExs for all the parameters
 	lec := &Lecture{textRaw: text}
 	lec.textRaw = strings.Join(strings.Fields(lec.textRaw), " ")
-	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\.\s\d+:\d+`)
+	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\..*\d+:\d+`)
 	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
-	lec.titlePattern = regexp.MustCompile(`<h1>(.*)\s-\sEinzelansicht`)
-	lec.roomPattern = regexp.MustCompile(`woch.*?-\s([A-Z][A-Z]\s\d*\.?\d+).*\sGruppe`)
+	lec.titlePattern = regexp.MustCompile(`<h1>(.*) - Einzelansicht`)
+	lec.roomPattern = regexp.MustCompile(`<a class="regular" title="Details ansehen zu Raum ([A-Z][A-Z] \d*\.?\d+).*?"`)
 	lec.modulesPattern = regexp.MustCompile("BM 1|BM 2|BM 3|AM 1|AM 2|AM 3|AM 4|AM 5|VM 1|VM 2|VM 3|GM 1|GM 2|GM 3")
-	lec.lecturersPattern = regexp.MustCompile(`Zuständigkeit\s(.+?)\s(Studiengänge\sAbschluss|Zuordnung\szu)+`)
+	lec.lecturersPattern = regexp.MustCompile(`Zust.ndigkeit.*?<a.*?> (.*?) <.a>`)
 	lec.commentaryPattern = regexp.MustCompile(`Inhalt\sKommentar(.*?)\s(Leistungsnachweis|Einsortiert in)`)
 
 	// Match parameters with scraped text
@@ -43,13 +43,17 @@ func newLecture(text string) *Lecture {
 		lec.time = "n.a."
 	}
 
-	lec.day = lec.dayPattern.FindString(lec.textRaw)
-	if len(lec.day) == 0 {
+	daySubMatch := lec.dayPattern.FindStringSubmatch(lec.textRaw)
+	if len(daySubMatch) >= 2 {
+		lec.day = daySubMatch[1]
+	} else {
 		lec.day = "n.a."
 	}
 
-	lec.room = lec.roomPattern.FindString(lec.textRaw)
-	if len(lec.room) == 0 {
+	roomSubMatch := lec.roomPattern.FindStringSubmatch(lec.textRaw)
+	if len(roomSubMatch) >= 2 {
+		lec.room = roomSubMatch[1]
+	} else {
 		lec.room = "n.a."
 	}
 
@@ -58,7 +62,8 @@ func newLecture(text string) *Lecture {
 		lec.commentary = "n.a."
 	}
 
-	lecturersStr := lec.lecturersPattern.FindString(lec.textRaw)
+	lecturersStr := lec.lecturersPattern.FindStringSubmatch(lec.textRaw)[1]
+	lecturersStr = strings.ReplaceAll(lecturersStr, "&nbsp;", " ")
 	if len(lecturersStr) == 0 {
 		lec.lecturersList = append(lec.lecturersList, "n.a.")
 	} else {
@@ -79,12 +84,22 @@ func newLecture(text string) *Lecture {
 	}
 
 	lec.modules = lec.modulesPattern.FindAllString(lec.textRaw, -1)
-	mapList(lec.modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
+	lec.modules = mapList(lec.modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
 	slices.SortFunc(lec.modules, compareModules)
+	lec.modules = slices.Compact(lec.modules)
 
-	lec.flags = "V___"
+	lec.flags = "____"
+	if lec.title != "n.a." {
+		lec.flags = replaceIdx(lec.flags, "V", 0)
+	}
 	if lec.room != "n.a." {
 		lec.flags = replaceIdx(lec.flags, "R", 1)
+	}
+	if len(lec.modules) != 0 {
+		lec.flags = replaceIdx(lec.flags, "M", 2)
+	}
+	if lec.commentary != "n.a." && lec.commentary != "..." && lec.commentary != "" {
+		lec.flags = replaceIdx(lec.flags, "B", 3)
 	}
 
 	return lec

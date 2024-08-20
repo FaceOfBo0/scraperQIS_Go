@@ -4,13 +4,27 @@ import "fmt"
 
 func main() {
 
-	//fmt.Println(getHtmlText("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100"))
-
 	scr := newScraper("")
-	scr.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
+	test := scr.getLectures()
+	for _, elem := range test {
+		fmt.Printf("elem.title: %v\n", elem.title)
+	}
+	/* scr.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
 	//fmt.Println(scr.lecturesLinks)
-	newLec := newLecture(scr.getLectureText(scr.lecturesLinks[1]))
+	newLec := newLecture(scr.getLectureText(scr.lecturesLinks[3]))
+	fmt.Printf("newLec.textRaw: %v\n", newLec.textRaw)
 	fmt.Printf("newLec.title: %v\n", newLec.title)
+	fmt.Printf("newLec.lecturers: %v\n", newLec.lecturers)
+	fmt.Printf("newLec.day: %v\n", newLec.day)
+	fmt.Printf("newLec.time: %v\n", newLec.time)
+	fmt.Printf("newLec.room: %v\n", newLec.room)
+	fmt.Printf("newLec.modules: %v\n", newLec.modules)
+	fmt.Printf("newLec.commentary: %v\n", newLec.commentary)
+	fmt.Printf("newLec.flags: %v\n", newLec.flags) */
+
+	/* for _, elem := range newLec.dayPattern.FindStringSubmatch(newLec.textRaw) {
+		fmt.Printf("elem: %v\n", elem)
+	} */
 
 	/* lec := newLecture("re", "re")
 	fmt.Println(lec.commentaryPattern.String()) */
