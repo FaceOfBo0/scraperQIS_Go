@@ -183,8 +183,8 @@ func RunTutServer() {
 	}).Methods("GET")
 
 	r.HandleFunc("/hello", func(wrt http.ResponseWriter, req *http.Request) {
-		//userid := Tern(req.URL.Query().Has("id"), req.URL.Query().Get("id"), "null")
-		//println(userid)
+		// userid := Tern(req.URL.Query().Has("id"), req.URL.Query().Get("id"), "null")
+		// println(userid)
 		wrt.Header().Set("Content-Type", "text/html")
 		wrt.Write([]byte("<html><h2>Hello</h2></html>"))
 	})
@@ -202,7 +202,7 @@ func RunTutServer() {
 		json.NewDecoder(r.Body).Decode(&book)
 
 		fmt.Fprintf(w, "%s is written by %s with %d pages.\n", book.Title, book.Author, book.Pages)
-	})
+	}).Methods("POST")
 
 	r.HandleFunc("/encode", func(w http.ResponseWriter, r *http.Request) {
 		book := Book{
