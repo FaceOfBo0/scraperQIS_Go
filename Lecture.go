@@ -10,26 +10,27 @@ import (
 const ()
 
 type Lecture struct {
-	day, time, title, flags, room, commentary, lecturers, link, textRaw string
-	dayPattern, timePattern, tittlePattern, roomPattern,
+	day, time, title, flags, room, commentary, lecturers, textRaw string
+	dayPattern, timePattern, titlePattern, roomPattern,
 	commentaryPattern, lecturersPattern, modulesPattern *regexp.Regexp
 	modules, lecturersList []string
 }
 
-func newLecture(text string, url string) *Lecture {
+func newLecture(text string) *Lecture {
 	//  initialize Lecture with RegExs for all the parameters
-	lec := &Lecture{textRaw: text, link: url}
-	lec.dayPattern, _ = regexp.Compile(`([A-Z][a-z])\.\s\d+:\d+`)
-	lec.timePattern, _ = regexp.Compile(`\d+:\d+`)
-	lec.tittlePattern, _ = regexp.Compile(`:\sStartseite\s(.*)\s-\sEinzelansicht`)
-	lec.roomPattern, _ = regexp.Compile(`woch.*?-\s([A-Z][A-Z]\s\d*\.?\d+).*\sGruppe`)
-	lec.modulesPattern, _ = regexp.Compile("BM 1|BM 2|BM 3|AM 1|AM 2|AM 3|AM 4|AM 5|VM 1|VM 2|VM 3|GM 1|GM 2|GM 3")
-	lec.lecturersPattern, _ = regexp.Compile(`Zuständigkeit\s(.+?)\s(Studiengänge\sAbschluss|Zuordnung\szu)+`)
-	lec.commentaryPattern, _ = regexp.Compile(`Inhalt\sKommentar(.*?)\s(Leistungsnachweis|Einsortiert in)`)
+	lec := &Lecture{textRaw: text}
+	lec.textRaw = strings.Join(strings.Fields(lec.textRaw), " ")
+	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\.\s\d+:\d+`)
+	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
+	lec.titlePattern = regexp.MustCompile(`<h1>(.*)\s-\sEinzelansicht`)
+	lec.roomPattern = regexp.MustCompile(`woch.*?-\s([A-Z][A-Z]\s\d*\.?\d+).*\sGruppe`)
+	lec.modulesPattern = regexp.MustCompile("BM 1|BM 2|BM 3|AM 1|AM 2|AM 3|AM 4|AM 5|VM 1|VM 2|VM 3|GM 1|GM 2|GM 3")
+	lec.lecturersPattern = regexp.MustCompile(`Zuständigkeit\s(.+?)\s(Studiengänge\sAbschluss|Zuordnung\szu)+`)
+	lec.commentaryPattern = regexp.MustCompile(`Inhalt\sKommentar(.*?)\s(Leistungsnachweis|Einsortiert in)`)
 
 	// Match parameters with scraped text
 
-	lec.title = lec.tittlePattern.FindString(lec.textRaw)
+	lec.title = lec.titlePattern.FindStringSubmatch(lec.textRaw)[1]
 	lec.title = strings.ReplaceAll(lec.title, "&", "&amp;")
 	if len(lec.title) == 0 {
 		lec.title = "n.a."
@@ -82,7 +83,7 @@ func newLecture(text string, url string) *Lecture {
 	slices.SortFunc(lec.modules, compareModules)
 
 	lec.flags = "V___"
-	if lec.room == "n.a" {
+	if lec.room != "n.a." {
 		lec.flags = replaceIdx(lec.flags, "R", 1)
 	}
 

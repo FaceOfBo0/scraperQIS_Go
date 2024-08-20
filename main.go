@@ -8,7 +8,9 @@ func main() {
 
 	scr := newScraper("")
 	scr.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
-	fmt.Println(scr.lecturesLinks)
+	//fmt.Println(scr.lecturesLinks)
+	newLec := newLecture(scr.getLectureText(scr.lecturesLinks[1]))
+	fmt.Printf("newLec.title: %v\n", newLec.title)
 
 	/* lec := newLecture("re", "re")
 	fmt.Println(lec.commentaryPattern.String()) */

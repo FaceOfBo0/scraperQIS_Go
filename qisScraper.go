@@ -26,8 +26,8 @@ type Scraper struct {
 	offset        string
 }
 
-func newScraper(off string) *Scraper {
-	return &Scraper{offset: off}
+func newScraper(offset string) *Scraper {
+	return &Scraper{offset: offset}
 }
 
 func (s *Scraper) getLectureText(url string) string {
