@@ -16,9 +16,9 @@ type Lecture struct {
 	modules, lecturersList []string
 }
 
-func newLecture(text string) *Lecture {
+func newLecture(text string) Lecture {
 	//  initialize Lecture with RegExs for all the parameters
-	lec := &Lecture{textRaw: text}
+	lec := Lecture{textRaw: text}
 	lec.textRaw = strings.Join(strings.Fields(lec.textRaw), " ")
 	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\..*\d+:\d+`)
 	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
@@ -30,9 +30,11 @@ func newLecture(text string) *Lecture {
 
 	// Match parameters with scraped text
 
-	lec.title = lec.titlePattern.FindStringSubmatch(lec.textRaw)[1]
-	lec.title = strings.ReplaceAll(lec.title, "&", "&amp;")
-	if len(lec.title) == 0 {
+	titleSubMatch := lec.titlePattern.FindStringSubmatch(lec.textRaw)
+	if len(titleSubMatch) >= 2 {
+		lec.title = titleSubMatch[1]
+		lec.title = strings.ReplaceAll(lec.title, "&", "&amp;")
+	} else {
 		lec.title = "n.a."
 	}
 
@@ -62,27 +64,31 @@ func newLecture(text string) *Lecture {
 		lec.commentary = "n.a."
 	}
 
-	lecturersStr := lec.lecturersPattern.FindStringSubmatch(lec.textRaw)[1]
-	lecturersStr = strings.ReplaceAll(lecturersStr, "&nbsp;", " ")
-	if len(lecturersStr) == 0 {
-		lec.lecturersList = append(lec.lecturersList, "n.a.")
-	} else {
-		lecturersArr := strings.Split(lecturersStr, ", ")
-		if len(lecturersArr) != 0 {
-			lec.lecturersList = append(lec.lecturersList, lecturersArr[0])
-			if len(lecturersArr) > 3 {
-				secLecturerList := strings.Split(lecturersArr[2], " ")
-				lec.lecturersList = append(lec.lecturersList, secLecturerList[len(secLecturerList)-1])
+	lecturersSubMatch := lec.lecturersPattern.FindStringSubmatch(lec.textRaw)
+	if len(lecturersSubMatch) >= 2 {
+		lecturersStr := lecturersSubMatch[1]
+		lecturersStr = strings.ReplaceAll(lecturersStr, "&nbsp;", " ")
+		if len(lecturersStr) == 0 {
+			lec.lecturersList = append(lec.lecturersList, "n.a.")
+		} else {
+			lecturersArr := strings.Split(lecturersStr, ", ")
+			if len(lecturersArr) != 0 {
+				lec.lecturersList = append(lec.lecturersList, lecturersArr[0])
+				if len(lecturersArr) > 3 {
+					secLecturerList := strings.Split(lecturersArr[2], " ")
+					lec.lecturersList = append(lec.lecturersList, secLecturerList[len(secLecturerList)-1])
+				}
 			}
 		}
-	}
 
-	if len(lec.lecturersList) > 1 {
-		lec.lecturers = strings.Join(lec.lecturersList, ", ")
-	} else if len(lec.lecturersList) == 1 {
-		lec.lecturers = lec.lecturersList[0]
+		if len(lec.lecturersList) > 1 {
+			lec.lecturers = strings.Join(lec.lecturersList, ", ")
+		} else if len(lec.lecturersList) == 1 {
+			lec.lecturers = lec.lecturersList[0]
+		}
+	} else {
+		lec.lecturers = "n.a."
 	}
-
 	lec.modules = lec.modulesPattern.FindAllString(lec.textRaw, -1)
 	lec.modules = mapList(lec.modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
 	slices.SortFunc(lec.modules, compareModules)

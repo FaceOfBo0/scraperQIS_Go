@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -24,19 +25,55 @@ func getHtmlText(url string) string {
 type Scraper struct {
 	lecturesLinks []string
 	offset        string
-	lectures      []*Lecture
+	url           string
+	lectures      []Lecture
 }
 
-func newScraper(offset string) *Scraper {
-	return &Scraper{offset: offset}
+func newScraper(url string, offset string) Scraper {
+	return Scraper{url: url, offset: offset}
 }
 
-func (s *Scraper) getLectures() []*Lecture {
+func (s *Scraper) getLectures() []Lecture {
 
 	if s.lectures == nil {
-		s.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
+		s.loadLecturesLinks()
 		for _, elem := range s.lecturesLinks {
 			s.lectures = append(s.lectures, newLecture(s.getLectureText(elem)))
+		}
+	}
+	return s.lectures
+}
+
+func (s *Scraper) getLecturesConc() []Lecture {
+	if s.lectures == nil {
+		s.loadLecturesLinks()
+
+		// Create a channel to handle lecture links
+		lectureChan := make(chan Lecture, len(s.lecturesLinks))
+		var wg sync.WaitGroup
+
+		// Worker function to process lecture links
+		worker := func(link string) {
+			defer wg.Done()
+			lecture := newLecture(s.getLectureText(link))
+			lectureChan <- lecture
+		}
+
+		// Launch goroutines to process lecture links
+		for _, link := range s.lecturesLinks {
+			wg.Add(1)
+			go worker(link)
+		}
+
+		// Close the channel once all goroutines are done
+		go func() {
+			wg.Wait()
+			close(lectureChan)
+		}()
+
+		// Collect results from the channel
+		for lecture := range lectureChan {
+			s.lectures = append(s.lectures, lecture)
 		}
 	}
 	return s.lectures
@@ -46,7 +83,7 @@ func (s *Scraper) getLectureText(url string) string {
 	return getHtmlText(url + s.offset)
 }
 
-func (s *Scraper) getLecturesLinks(url string) {
+func (s *Scraper) loadLecturesLinks() {
 	lecLinks := make([]string, 0)
 
 	col := colly.NewCollector()
@@ -65,5 +102,5 @@ func (s *Scraper) getLecturesLinks(url string) {
 		s.lecturesLinks = lecLinks
 	})
 
-	col.Visit(url)
+	col.Visit(s.url)
 }

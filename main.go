@@ -1,14 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func main() {
 
-	scr := newScraper("")
-	test := scr.getLectures()
-	for _, elem := range test {
-		fmt.Printf("elem.title: %v\n", elem.title)
-	}
+	scr := newScraper("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100", "")
+	start := time.Now()
+	test := scr.getLecturesConc()
+	duration := time.Since(start)
+	fmt.Println(test)
+	fmt.Println(duration)
 	/* scr.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
 	//fmt.Println(scr.lecturesLinks)
 	newLec := newLecture(scr.getLectureText(scr.lecturesLinks[3]))
