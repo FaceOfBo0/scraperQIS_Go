@@ -32,8 +32,6 @@ func RunServer() {
 	tmplRoot := template.Must(template.ParseFiles("templates/root.html"))
 	tmplChart := template.Must(template.ParseFiles("templates/chart.html"))
 
-	mux := http.NewServeMux()
-
 	rootRoute := func(rw http.ResponseWriter, r *http.Request) {
 		tmplRoot.Execute(rw, nil)
 	}
@@ -50,7 +48,7 @@ func RunServer() {
 		slices.SortFunc(lecturesList, compareLecsByDays)
 		tmplChart.Execute(rw, &lecturesList)
 	}
-	mux.HandleFunc("/", rootRoute)
-	mux.HandleFunc("/chart", chartRoute)
-	http.ListenAndServe(":4567", mux)
+	http.HandleFunc("/", rootRoute)
+	http.HandleFunc("/chart", chartRoute)
+	http.ListenAndServe(":4567", nil)
 }
