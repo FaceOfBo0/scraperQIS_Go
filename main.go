@@ -1,25 +1,18 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
-
 func main() {
 
-	scr := newScraper("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100", "")
+	RunServer()
+	/* 	scr := newScraper("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100", "")
 
-	/* start := time.Now()
-	scr.loadLecturesLinks()
-	duration := time.Since(start)
-	fmt.Printf("scr.lecturesLinks: %d\n", len(scr.lecturesLinks))
-	fmt.Printf("duration: %v\n", duration) */
-
-	start := time.Now()
-	test := scr.getLecturesv2()
-	duration := time.Since(start)
-	fmt.Println(test[0].time)
-	fmt.Println(duration)
+	   	start := time.Now()
+	   	test := scr.getLecturesv2()
+	   	duration := time.Since(start)
+	   	slices.SortFunc(test, compareLecsByDays)
+	   	for _, elem := range test {
+	   		fmt.Println(elem.day, elem.time)
+	   	}
+	   	fmt.Printf("duration: %v\n", duration) */
 	/* fmt.Print("Press any key...")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan() */

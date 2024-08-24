@@ -1,25 +1,30 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 )
 
-const ()
+var (
+	lessDayList = []Tuple[string, string]{{"Mo", "Di"}, {"Mo", "Mi"}, {"Mo", "Do"}, {"Mo", "Fr"},
+		{"Di", "Mi"}, {"Di", "Do"}, {"Di", "Fr"}, {"Mi", "Do"}, {"Mi", "Fr"}, {"Do", "Fr"}, {"Mo", "Sa"},
+		{"Mo", "So"}, {"Di", "Sa"}, {"Di", "So"}, {"Mi", "Sa"}, {"Mi", "So"}, {"Do", "Sa"}, {"Do", "So"},
+		{"Fr", "Sa"}, {"Fr", "So"}, {"Sa", "So"}}
+)
 
 type Lecture struct {
-	day, time, title, flags, room, commentary, lecturers, textRaw string
+	Day, Time, Title, Flags, Room, Commentary, Lecturers, TextRaw, Link string
+	Modules, LecturersList                                              []string
 	dayPattern, timePattern, titlePattern, roomPattern,
 	commentaryPattern, lecturersPattern, modulesPattern *regexp.Regexp
-	modules, lecturersList []string
 }
 
-func newLecture(text string) Lecture {
+func newLecture(text string, url string) Lecture {
 	//  initialize Lecture with RegExs for all the parameters
-	lec := Lecture{textRaw: text}
-	lec.textRaw = strings.Join(strings.Fields(lec.textRaw), " ")
+	lec := Lecture{TextRaw: text, Link: url}
+	lec.TextRaw = strings.Join(strings.Fields(lec.TextRaw), " ")
 	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\..*\d+:\d+`)
 	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
 	lec.titlePattern = regexp.MustCompile(`<h1>(.*) - Einzelansicht`)
@@ -30,103 +35,119 @@ func newLecture(text string) Lecture {
 
 	// Match parameters with scraped text
 
-	titleSubMatch := lec.titlePattern.FindStringSubmatch(lec.textRaw)
+	titleSubMatch := lec.titlePattern.FindStringSubmatch(lec.TextRaw)
 	if len(titleSubMatch) >= 2 {
-		lec.title = titleSubMatch[1]
-		lec.title = strings.ReplaceAll(lec.title, "&", "&amp;")
+		lec.Title = titleSubMatch[1]
+		lec.Title = strings.ReplaceAll(lec.Title, "&", "&amp;")
 	} else {
-		lec.title = "n.a."
+		lec.Title = "n.a."
 	}
 
-	timesList := lec.timePattern.FindAllString(lec.textRaw, -1)
+	timesList := lec.timePattern.FindAllString(lec.TextRaw, -1)
 	if len(timesList) >= 2 {
-		lec.time = timesList[0][:2] + "-" + timesList[1][:2]
+		lec.Time = timesList[0][:2] + "-" + timesList[1][:2]
 	} else {
-		lec.time = "n.a."
+		lec.Time = "n.a."
 	}
 
-	daySubMatch := lec.dayPattern.FindStringSubmatch(lec.textRaw)
+	daySubMatch := lec.dayPattern.FindStringSubmatch(lec.TextRaw)
 	if len(daySubMatch) >= 2 {
-		lec.day = daySubMatch[1]
+		lec.Day = daySubMatch[1]
 	} else {
-		lec.day = "n.a."
+		lec.Day = "n.a."
 	}
 
-	roomSubMatch := lec.roomPattern.FindStringSubmatch(lec.textRaw)
+	roomSubMatch := lec.roomPattern.FindStringSubmatch(lec.TextRaw)
 	if len(roomSubMatch) >= 2 {
-		lec.room = roomSubMatch[1]
+		lec.Room = roomSubMatch[1]
 	} else {
-		lec.room = "n.a."
+		lec.Room = "n.a."
 	}
 
-	lec.commentary = lec.commentaryPattern.FindString(lec.textRaw)
-	if len(lec.commentary) == 0 {
-		lec.commentary = "n.a."
+	lec.Commentary = lec.commentaryPattern.FindString(lec.TextRaw)
+	if len(lec.Commentary) == 0 {
+		lec.Commentary = "n.a."
 	}
 
-	lecturersSubMatch := lec.lecturersPattern.FindStringSubmatch(lec.textRaw)
+	lecturersSubMatch := lec.lecturersPattern.FindStringSubmatch(lec.TextRaw)
 	if len(lecturersSubMatch) >= 2 {
 		lecturersStr := lecturersSubMatch[1]
 		lecturersStr = strings.ReplaceAll(lecturersStr, "&nbsp;", " ")
 		if len(lecturersStr) == 0 {
-			lec.lecturersList = append(lec.lecturersList, "n.a.")
+			lec.LecturersList = append(lec.LecturersList, "n.a.")
 		} else {
 			lecturersArr := strings.Split(lecturersStr, ", ")
 			if len(lecturersArr) != 0 {
-				lec.lecturersList = append(lec.lecturersList, lecturersArr[0])
+				lec.LecturersList = append(lec.LecturersList, lecturersArr[0])
 				if len(lecturersArr) > 3 {
 					secLecturerList := strings.Split(lecturersArr[2], " ")
-					lec.lecturersList = append(lec.lecturersList, secLecturerList[len(secLecturerList)-1])
+					lec.LecturersList = append(lec.LecturersList, secLecturerList[len(secLecturerList)-1])
 				}
 			}
 		}
 
-		if len(lec.lecturersList) > 1 {
-			lec.lecturers = strings.Join(lec.lecturersList, ", ")
-		} else if len(lec.lecturersList) == 1 {
-			lec.lecturers = lec.lecturersList[0]
+		if len(lec.LecturersList) > 1 {
+			lec.Lecturers = strings.Join(lec.LecturersList, ", ")
+		} else if len(lec.LecturersList) == 1 {
+			lec.Lecturers = lec.LecturersList[0]
 		}
 	} else {
-		lec.lecturers = "n.a."
+		lec.Lecturers = "n.a."
 	}
 
-	lec.modules = lec.modulesPattern.FindAllString(lec.textRaw, -1)
-	lec.modules = mapList(lec.modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
-	slices.SortFunc(lec.modules, compareModules)
-	lec.modules = slices.Compact(lec.modules)
+	lec.Modules = lec.modulesPattern.FindAllString(lec.TextRaw, -1)
+	lec.Modules = mapList(lec.Modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
+	slices.SortFunc(lec.Modules, compareModules)
+	lec.Modules = slices.Compact(lec.Modules)
 
-	lec.flags = "____"
-	if lec.title != "n.a." {
-		lec.flags = replaceIdx(lec.flags, "V", 0)
+	lec.Flags = "____"
+	if lec.Title != "n.a." {
+		lec.Flags = replaceIdx(lec.Flags, "V", 0)
 	}
-	if lec.room != "n.a." {
-		lec.flags = replaceIdx(lec.flags, "R", 1)
+	if lec.Room != "n.a." {
+		lec.Flags = replaceIdx(lec.Flags, "R", 1)
 	}
-	if len(lec.modules) != 0 {
-		lec.flags = replaceIdx(lec.flags, "M", 2)
+	if len(lec.Modules) != 0 {
+		lec.Flags = replaceIdx(lec.Flags, "M", 2)
 	}
-	if lec.commentary != "n.a." && lec.commentary != "..." && lec.commentary != "" {
-		lec.flags = replaceIdx(lec.flags, "B", 3)
+	if lec.Commentary != "n.a." && lec.Commentary != "..." && lec.Commentary != "" {
+		lec.Flags = replaceIdx(lec.Flags, "B", 3)
 	}
 
 	return lec
 }
 
 func lessDay(day_a string, day_b string) bool {
-	return false
+	if day_a == "Block" || day_a == "n.a." {
+		return false
+	} else if day_b == "Block" || day_b == "n.a." {
+		return true
+	} else {
+		dayTuple := Tuple[string, string]{fst: day_a, snd: day_b}
+		return slices.Contains(lessDayList, dayTuple)
+	}
+
 }
 
-func lessTime(time_a string, time_b string) bool {
-	return false
+func lessTime(time_a_str string, time_b_str string) bool {
+	if time_a_str == "n.a." {
+		return false
+	} else if time_b_str == "n.a." {
+		return true
+	} else {
+		time_a, _ := strconv.Atoi(time_a_str[0:2])
+		time_b, _ := strconv.Atoi(time_b_str[0:2])
+		return time_a < time_b
+	}
+
 }
 
-func compareLecByDays(lec_a *Lecture, lec_b *Lecture) int {
-	lessDayList := []Tuple[string, string]{{"Mo", "Di"}, {"Mo", "Mi"}, {"Mo", "Do"}, {"Mo", "Fr"},
-		{"Di", "Mi"}, {"Di", "Do"}, {"Di", "Fr"}, {"Mi", "Do"}, {"Mi", "Fr"}, {"Do", "Fr"}, {"Mo", "Sa"},
-		{"Mo", "So"}, {"Di", "Sa"}, {"Di", "So"}, {"Mi", "Sa"}, {"Mi", "So"}, {"Do", "Sa"}, {"Do", "So"},
-		{"Fr", "Sa"}, {"Fr", "So"}, {"Sa", "So"}}
-	fmt.Println(lessDayList)
-	return 0
+func compareLecsByDays(lec_a Lecture, lec_b Lecture) int {
+	if lessDay(lec_a.Day, lec_b.Day) || ((lec_a.Day == lec_b.Day) && lessTime(lec_a.Time, lec_b.Time)) {
+		return -1
+	} else {
+		return 1
+	}
 }
 
 func compareModules(mod_a string, mod_b string) int {

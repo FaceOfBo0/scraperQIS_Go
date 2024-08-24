@@ -36,7 +36,7 @@
 </head>
 
 <body style="background-color: #2B2A33; color: whitesmoke">
-<h1>LSF Wochenplan ${semester}</h1>
+<h1>LSF Wochenplan SoSe 24</h1>
 <hr width="450px">
 <br>
 <button class="btn btn-primary" style="color: whitesmoke" onclick="window.location.href='/download'">Download ODS File</button>
@@ -54,20 +54,19 @@
 
 
     </tr>
-    <#list lecturesList as lecture>
-        <#assign modules = lecture.getModulesList()>
-        <tr>
-            <td>${lecture.getDay()}</td>
-            <td>${lecture.getTime()}</td>
-            <td><a href="${lecture.getLink()}">${lecture.getTitle()}</a></td>
-            <td>${lecture.getLecturers()}</td>
-            <td>${lecture.getRoom()}</td>
-            <td><#list modules as module>
-                ${module}
-            </#list></td>
-            <td>${lecture.getFlags()}</td>
-        </tr>
-    </#list>
+    {{range .}}
+    <tr>
+        <td>{{.Day}}</td>
+        <td>{{.Time}} Uhr</td>
+        <td><a href="{{.Link}}">{{.Title}}</a></td>
+        <td>{{.Lecturers}}</td>
+        <td>{{.Room}}</td>
+        <td>{{range .Modules}}
+            {{.}}
+        {{end}}</td>
+        <td>{{.Flags}}</td>
+    </tr>
+    {{end}}
 </table>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"

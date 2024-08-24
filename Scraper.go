@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
@@ -21,21 +22,27 @@ func getHtmlText(url string) string {
 	return string(content)
 }
 
-func newScraper(url string, offset string) *Scraper {
-	return &Scraper{url: url, offset: offset}
-}
-
 type Scraper struct {
+	semester, url string
 	lecturesLinks []string
-	offset        string
-	url           string
 	lectures      []Lecture
 }
 
-func (s *Scraper) getLecturesv2() []Lecture {
+func (s *Scraper) createUrlOffset() {
+	if s.semester != "" && len(s.semester) == 6 {
+		year := strings.Split(s.semester, ".")[0]
+		half := strings.Split(s.semester, ".")[1]
+		offset := "&k_semester.semid=" + year + half +
+			"&idcol=k_semester.semid&idval=" + year + half +
+			"&purge=n&getglobal=semester"
+		s.url += offset
+	}
+}
+
+func (s *Scraper) getLectures() []Lecture {
 	if s.lectures == nil {
 		//s.loadLecturesLinks()
-		s.loadLecturesLinksGQ()
+		s.loadLecturesLinks()
 
 		// Create a channel to handle lecture links
 		lectureChan := make(chan Lecture, len(s.lecturesLinks))
@@ -44,7 +51,7 @@ func (s *Scraper) getLecturesv2() []Lecture {
 		// Worker function to process lecture links
 		worker := func(link string) {
 			defer wg.Done()
-			lecture := newLecture(getHtmlText(link + s.offset))
+			lecture := newLecture(getHtmlText(link), link)
 			lectureChan <- lecture
 		}
 
@@ -68,7 +75,7 @@ func (s *Scraper) getLecturesv2() []Lecture {
 	return s.lectures
 }
 
-func (s *Scraper) loadLecturesLinksGQ() {
+func (s *Scraper) loadLecturesLinks() {
 	if len(s.lecturesLinks) == 0 {
 		resp, err := http.Get(s.url)
 		if err != nil {
@@ -84,7 +91,7 @@ func (s *Scraper) loadLecturesLinksGQ() {
 		doc.Find("td").Each(func(_ int, sel *goquery.Selection) {
 			link := sel.Find("a").AttrOr("href", "")
 			if link != "" {
-				s.lecturesLinks = append(s.lecturesLinks, link+s.offset)
+				s.lecturesLinks = append(s.lecturesLinks, link)
 			}
 		})
 	}

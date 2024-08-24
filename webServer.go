@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"net/http"
-	"text/template"
-	"time"
+	"slices"
 )
 
-type Middleware func(http.HandlerFunc) http.HandlerFunc
+/* type Middleware func(http.HandlerFunc) http.HandlerFunc
 
 func Logging() Middleware {
 	return func(hf http.HandlerFunc) http.HandlerFunc {
@@ -25,27 +24,33 @@ func Chain(hf http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
 		hf = m(hf)
 	}
 	return hf
-}
+} */
 
-func StartSever() {
+func RunServer() {
 
 	// load template files
 	tmplRoot := template.Must(template.ParseFiles("templates/root.html"))
 	tmplChart := template.Must(template.ParseFiles("templates/chart.html"))
 
+	mux := http.NewServeMux()
+
 	rootRoute := func(rw http.ResponseWriter, r *http.Request) {
 		tmplRoot.Execute(rw, nil)
 	}
 
-	chartRoute := func(wr http.ResponseWriter, r *http.Request) {
+	chartRoute := func(rw http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			tmplRoot.Execute(wr, nil)
+			tmplRoot.Execute(rw, nil)
 			return
 		}
-		tmplChart.Execute(wr, nil)
-	}
 
-	http.HandleFunc("/", Chain(rootRoute, Logging()))
-	http.HandleFunc("/chart", Chain(chartRoute, Logging()))
-	http.ListenAndServe(":4567", nil)
+		scraper := Scraper{url: r.FormValue("url"), semester: r.FormValue("semester")}
+		scraper.createUrlOffset()
+		lecturesList := scraper.getLectures()
+		slices.SortFunc(lecturesList, compareLecsByDays)
+		tmplChart.Execute(rw, &lecturesList)
+	}
+	mux.HandleFunc("/", rootRoute)
+	mux.HandleFunc("/chart", chartRoute)
+	http.ListenAndServe(":4567", mux)
 }
