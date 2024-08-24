@@ -89,6 +89,7 @@ func newLecture(text string) Lecture {
 	} else {
 		lec.lecturers = "n.a."
 	}
+
 	lec.modules = lec.modulesPattern.FindAllString(lec.textRaw, -1)
 	lec.modules = mapList(lec.modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
 	slices.SortFunc(lec.modules, compareModules)

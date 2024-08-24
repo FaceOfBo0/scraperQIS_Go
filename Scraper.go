@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"sync"
 
-	"github.com/gocolly/colly/v2"
+	"github.com/PuerkitoBio/goquery"
 )
 
 func getHtmlText(url string) string {
@@ -22,6 +21,10 @@ func getHtmlText(url string) string {
 	return string(content)
 }
 
+func newScraper(url string, offset string) *Scraper {
+	return &Scraper{url: url, offset: offset}
+}
+
 type Scraper struct {
 	lecturesLinks []string
 	offset        string
@@ -29,24 +32,10 @@ type Scraper struct {
 	lectures      []Lecture
 }
 
-func newScraper(url string, offset string) Scraper {
-	return Scraper{url: url, offset: offset}
-}
-
-func (s *Scraper) getLectures() []Lecture {
-
+func (s *Scraper) getLecturesv2() []Lecture {
 	if s.lectures == nil {
-		s.loadLecturesLinks()
-		for _, elem := range s.lecturesLinks {
-			s.lectures = append(s.lectures, newLecture(s.getLectureText(elem)))
-		}
-	}
-	return s.lectures
-}
-
-func (s *Scraper) getLecturesConc() []Lecture {
-	if s.lectures == nil {
-		s.loadLecturesLinks()
+		//s.loadLecturesLinks()
+		s.loadLecturesLinksGQ()
 
 		// Create a channel to handle lecture links
 		lectureChan := make(chan Lecture, len(s.lecturesLinks))
@@ -55,7 +44,7 @@ func (s *Scraper) getLecturesConc() []Lecture {
 		// Worker function to process lecture links
 		worker := func(link string) {
 			defer wg.Done()
-			lecture := newLecture(s.getLectureText(link))
+			lecture := newLecture(getHtmlText(link + s.offset))
 			lectureChan <- lecture
 		}
 
@@ -79,11 +68,42 @@ func (s *Scraper) getLecturesConc() []Lecture {
 	return s.lectures
 }
 
-func (s *Scraper) getLectureText(url string) string {
-	return getHtmlText(url + s.offset)
+func (s *Scraper) loadLecturesLinksGQ() {
+	if len(s.lecturesLinks) == 0 {
+		resp, err := http.Get(s.url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		doc.Find("td").Each(func(_ int, sel *goquery.Selection) {
+			link := sel.Find("a").AttrOr("href", "")
+			if link != "" {
+				s.lecturesLinks = append(s.lecturesLinks, link+s.offset)
+			}
+		})
+	}
+
 }
 
-func (s *Scraper) loadLecturesLinks() {
+/* func (s *Scraper) getLectures() []Lecture {
+
+	if s.lectures == nil {
+		//s.loadLecturesLinks()
+		s.loadLecturesLinksGQ()
+		for _, elem := range s.lecturesLinks {
+			s.lectures = append(s.lectures, newLecture(s.getLectureText(elem)))
+		}
+	}
+	return s.lectures
+} */
+
+/* func (s *Scraper) loadLecturesLinks() {
 	lecLinks := make([]string, 0)
 
 	col := colly.NewCollector()
@@ -102,5 +122,8 @@ func (s *Scraper) loadLecturesLinks() {
 		s.lecturesLinks = lecLinks
 	})
 
-	col.Visit(s.url)
-}
+	err := col.Visit(s.url)
+	if err != nil {
+		log.Fatal(err)
+	}
+} */

@@ -8,11 +8,22 @@ import (
 func main() {
 
 	scr := newScraper("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100", "")
-	start := time.Now()
-	test := scr.getLecturesConc()
+
+	/* start := time.Now()
+	scr.loadLecturesLinks()
 	duration := time.Since(start)
-	fmt.Println(test)
+	fmt.Printf("scr.lecturesLinks: %d\n", len(scr.lecturesLinks))
+	fmt.Printf("duration: %v\n", duration) */
+
+	start := time.Now()
+	test := scr.getLecturesv2()
+	duration := time.Since(start)
+	fmt.Println(test[0].time)
 	fmt.Println(duration)
+	/* fmt.Print("Press any key...")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan() */
+
 	/* scr.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
 	//fmt.Println(scr.lecturesLinks)
 	newLec := newLecture(scr.getLectureText(scr.lecturesLinks[3]))
