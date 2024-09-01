@@ -3,16 +3,21 @@ package main
 func main() {
 
 	RunServer()
-	/* 	scr := newScraper("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100", "")
 
-	   	start := time.Now()
-	   	test := scr.getLecturesv2()
-	   	duration := time.Since(start)
-	   	slices.SortFunc(test, compareLecsByDays)
-	   	for _, elem := range test {
-	   		fmt.Println(elem.day, elem.time)
-	   	}
-	   	fmt.Printf("duration: %v\n", duration) */
+	/* scr := Scraper{url: "https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100"}
+
+	//start := time.Now()
+	test := scr.getLectures()
+	//duration := time.Since(start)
+	slices.SortFunc(test, compareLecsByDays)
+	fmt.Println(test[2].Title)
+	fmt.Println(test[2].TextRaw)
+	fmt.Println(test[2].Commentary) */
+
+	/* for _, elem := range test {
+		fmt.Println(elem.day, elem.time)
+	} */
+	//fmt.Printf("duration: %v\n", duration)
 	/* fmt.Print("Press any key...")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan() */

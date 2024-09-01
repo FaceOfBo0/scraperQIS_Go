@@ -15,9 +15,19 @@ var (
 )
 
 type Lecture struct {
-	Day, Time, Title, Flags, Room, Commentary, Lecturers, TextRaw, Link string
-	Modules, LecturersList                                              []string
-	dayPattern, timePattern, titlePattern, roomPattern,
+	Day           string   `json:"day"`
+	Time          string   `json:"time"`
+	Title         string   `json:"title"`
+	Flags         string   `json:"flags"`
+	Room          string   `json:"room"`
+	Lecturers     string   `json:"lecturers"`
+	Link          string   `json:"link"`
+	Semester      string   `json:"semester"`
+	Modules       []string `json:"modules"`
+	LecturersList []string `json:"-"`
+	Commentary    string   `json:"commentary"`
+	TextRaw       string   `json:"-"`
+	dayPattern, timePattern, titlePattern, roomPattern, semesterPattern,
 	commentaryPattern, lecturersPattern, modulesPattern *regexp.Regexp
 }
 
@@ -26,14 +36,21 @@ func newLecture(text string, url string) Lecture {
 	lec := Lecture{TextRaw: text, Link: url}
 	lec.TextRaw = strings.Join(strings.Fields(lec.TextRaw), " ")
 	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\..*\d+:\d+`)
+	lec.semesterPattern = regexp.MustCompile(`<td class="mod_n_basic" headers="basic_5">(.*?)</td>`)
 	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
 	lec.titlePattern = regexp.MustCompile(`<h1>(.*) - Einzelansicht`)
 	lec.roomPattern = regexp.MustCompile(`<a class="regular" title="Details ansehen zu Raum ([A-Z][A-Z] \d*\.?\d+).*?"`)
 	lec.modulesPattern = regexp.MustCompile("BM 1|BM 2|BM 3|AM 1|AM 2|AM 3|AM 4|AM 5|VM 1|VM 2|VM 3|GM 1|GM 2|GM 3")
 	lec.lecturersPattern = regexp.MustCompile(`Zust.ndigkeit.*?<a.*?> (.*?) <.a>`)
-	lec.commentaryPattern = regexp.MustCompile(`Inhalt\sKommentar(.*?)\s(Leistungsnachweis|Einsortiert in)`)
+	lec.commentaryPattern = regexp.MustCompile(`Kommentar.*?<p>(.*)</p>.*Einsortiert in`)
 
 	// Match parameters with scraped text
+	semesterSubMatch := lec.semesterPattern.FindStringSubmatch(lec.TextRaw)
+	if len(semesterSubMatch) >= 2 {
+		lec.Semester = semesterSubMatch[1]
+	} else {
+		lec.Semester = "n.a."
+	}
 
 	titleSubMatch := lec.titlePattern.FindStringSubmatch(lec.TextRaw)
 	if len(titleSubMatch) >= 2 {
@@ -64,8 +81,10 @@ func newLecture(text string, url string) Lecture {
 		lec.Room = "n.a."
 	}
 
-	lec.Commentary = lec.commentaryPattern.FindString(lec.TextRaw)
-	if len(lec.Commentary) == 0 {
+	commetarySubMatch := lec.commentaryPattern.FindStringSubmatch(lec.TextRaw)
+	if len(commetarySubMatch) >= 2 {
+		lec.Commentary = commetarySubMatch[1]
+	} else {
 		lec.Commentary = "n.a."
 	}
 
@@ -126,7 +145,6 @@ func lessDay(day_a string, day_b string) bool {
 		dayTuple := Tuple[string, string]{fst: day_a, snd: day_b}
 		return slices.Contains(lessDayList, dayTuple)
 	}
-
 }
 
 func lessTime(time_a_str string, time_b_str string) bool {
@@ -139,7 +157,6 @@ func lessTime(time_a_str string, time_b_str string) bool {
 		time_b, _ := strconv.Atoi(time_b_str[0:2])
 		return time_a < time_b
 	}
-
 }
 
 func compareLecsByDays(lec_a Lecture, lec_b Lecture) int {

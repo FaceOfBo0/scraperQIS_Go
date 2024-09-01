@@ -36,10 +36,13 @@
 </head>
 
 <body style="background-color: #2B2A33; color: whitesmoke">
-<h1>LSF Wochenplan SoSe 24</h1>
+<h1>LSF Wochenplan {{ .Semester}}</h1>
 <hr width="450px">
 <br>
-<button class="btn btn-primary" style="color: whitesmoke" onclick="window.location.href='/download'">Download ODS File</button>
+<form id="downloadForm">
+    <button class="btn btn-primary" style="color: whitesmoke" type="button" onclick="saveFile()">Save ODS File</button>
+</form>
+
 <br>
 <br>
 <table>
@@ -54,7 +57,7 @@
 
 
     </tr>
-    {{range .}}
+    {{range .Lectures}}
     <tr>
         <td>{{.Day}}</td>
         <td>{{.Time}} Uhr</td>
@@ -72,5 +75,23 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
         integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
         crossorigin="anonymous"></script>
+
+<script>
+    function saveFile() {
+        fetch('/download')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                console.log('File downloaded successfully');
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    }
+</script>
 </body>
 </html>

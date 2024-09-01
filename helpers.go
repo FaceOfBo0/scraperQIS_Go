@@ -1,5 +1,7 @@
 package main
 
+import "os"
+
 type Tuple[V, U any] struct {
 	fst V
 	snd U
@@ -15,4 +17,22 @@ func mapList[I, O any](list []I, fn func(I) O) []O {
 
 func replaceIdx(str string, replacement string, index int) string {
 	return str[:index] + replacement + str[index+1:]
+}
+
+// saveJsonToFile saves the JSON string to a specified file.
+func saveJsonToFile(jsonStr, filePath string) error {
+	// Open the file for writing, create it if it doesn't exist
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the JSON string to the file
+	_, err = file.WriteString(jsonStr)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -23,36 +23,79 @@ func getHtmlText(url string) string {
 }
 
 type Scraper struct {
-	semester, url string
-	lecturesLinks []string
-	lectures      []Lecture
+	Semester, Url string
+	//lecturesLinks []string
+	lectures []Lecture
 }
 
 func (s *Scraper) createUrlOffset() {
-	if s.semester != "" && len(s.semester) == 6 {
-		year := strings.Split(s.semester, ".")[0]
-		half := strings.Split(s.semester, ".")[1]
+	if s.Semester != "" && len(s.Semester) == 6 {
+		year := strings.Split(s.Semester, ".")[0]
+		half := strings.Split(s.Semester, ".")[1]
 		offset := "&k_semester.semid=" + year + half +
 			"&idcol=k_semester.semid&idval=" + year + half +
 			"&purge=n&getglobal=semester"
-		s.url += offset
+		s.Url += offset
 	}
 }
 
-func (s *Scraper) getLectures() []Lecture {
+func (s *Scraper) loadLectures() {
+
+	resp, err := http.Get(s.Url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create a channel to collect links
+	lecturesChan := make(chan Lecture)
+	var wg sync.WaitGroup
+
+	// Function to process each selection and send links to the channel
+	processSelection := func(sel *goquery.Selection) {
+		defer wg.Done()
+		link := sel.Find("a").AttrOr("href", "")
+		if link != "" {
+			lecturesChan <- newLecture(getHtmlText(link), link)
+		}
+	}
+
+	// Find all "td" elements and launch a goroutine for each
+	doc.Find("td").Each(func(_ int, sel *goquery.Selection) {
+		wg.Add(1)
+		go processSelection(sel)
+	})
+
+	// Close the channel once all goroutines are done
+	go func() {
+		wg.Wait()
+		close(lecturesChan)
+	}()
+
+	// Collect results from the channel
+	s.lectures = make([]Lecture, len(lecturesChan))
+	for lec := range lecturesChan {
+		s.lectures = append(s.lectures, lec)
+	}
+}
+
+/* func (s *Scraper) getLectures() []Lecture {
 	if s.lectures == nil {
-		//s.loadLecturesLinks()
 		s.loadLecturesLinks()
 
 		// Create a channel to handle lecture links
-		lectureChan := make(chan Lecture, len(s.lecturesLinks))
+		//lectureChan := make(chan *Lecture, len(s.lecturesLinks))
 		var wg sync.WaitGroup
 
 		// Worker function to process lecture links
 		worker := func(link string) {
 			defer wg.Done()
-			lecture := newLecture(getHtmlText(link), link)
-			lectureChan <- lecture
+			s.lectures = append(s.lectures, newLecture(getHtmlText(link), link))
 		}
 
 		// Launch goroutines to process lecture links
@@ -62,41 +105,16 @@ func (s *Scraper) getLectures() []Lecture {
 		}
 
 		// Close the channel once all goroutines are done
-		go func() {
-			wg.Wait()
-			close(lectureChan)
-		}()
+		wg.Wait()
+		//close(lectureChan)
 
 		// Collect results from the channel
-		for lecture := range lectureChan {
-			s.lectures = append(s.lectures, lecture)
-		}
+		// for lecture := range lectureChan {
+		//	s.lectures = append(s.lectures, lecture)
+		//}
 	}
 	return s.lectures
-}
-
-func (s *Scraper) loadLecturesLinks() {
-	if len(s.lecturesLinks) == 0 {
-		resp, err := http.Get(s.url)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		doc, err := goquery.NewDocumentFromReader(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		doc.Find("td").Each(func(_ int, sel *goquery.Selection) {
-			link := sel.Find("a").AttrOr("href", "")
-			if link != "" {
-				s.lecturesLinks = append(s.lecturesLinks, link)
-			}
-		})
-	}
-
-}
+} */
 
 /* func (s *Scraper) getLectures() []Lecture {
 
@@ -110,7 +128,7 @@ func (s *Scraper) loadLecturesLinks() {
 	return s.lectures
 } */
 
-/* func (s *Scraper) loadLecturesLinks() {
+/* func (s *Scraper) loadLecturesLinksC() {
 	lecLinks := make([]string, 0)
 
 	col := colly.NewCollector()
