@@ -56,6 +56,7 @@ func newLecture(text string, url string) Lecture {
 	titleSubMatch := lec.titlePattern.FindStringSubmatch(lec.TextRaw)
 	if len(titleSubMatch) >= 2 {
 		lec.Title = titleSubMatch[1]
+		lec.Title = strings.TrimSpace(lec.Title)
 		lec.Title = strings.ReplaceAll(lec.Title, "&", "&amp;")
 	} else {
 		lec.Title = "n.a."
@@ -119,6 +120,9 @@ func newLecture(text string, url string) Lecture {
 	lec.Modules = mapList(lec.Modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
 	slices.SortFunc(lec.Modules, compareModules)
 	lec.Modules = slices.Compact(lec.Modules)
+	if len(lec.Modules) == 0 {
+		lec.Modules = append(lec.Modules, "_")
+	}
 
 	lec.Flags = "____"
 	if lec.Title != "n.a." {
@@ -175,6 +179,37 @@ func compareLecsByDays(lec_a Lecture, lec_b Lecture) int {
 	} else {
 		return 1
 	}
+}
+
+func compareLecFuncs(ordering string) func(lec_a Lecture, lec_b Lecture) int {
+	if ordering == "0" {
+		return compareLecsByDays
+	} else if ordering == "1" {
+		return func(lec_a Lecture, lec_b Lecture) int {
+			return strings.Compare(lec_a.Time, lec_b.Time)
+		}
+	} else if ordering == "2" {
+		return func(lec_a Lecture, lec_b Lecture) int {
+			return strings.Compare(lec_a.Title, lec_b.Title)
+		}
+	} else if ordering == "3" {
+		return func(lec_a Lecture, lec_b Lecture) int {
+			return strings.Compare(lec_a.Lecturers, lec_b.Lecturers)
+		}
+	} else if ordering == "4" {
+		return func(lec_a Lecture, lec_b Lecture) int {
+			return strings.Compare(lec_a.Room, lec_b.Room)
+		}
+	} else if ordering == "5" {
+		return func(lec_a Lecture, lec_b Lecture) int {
+			return strings.Compare(lec_a.Modules[0], lec_b.Modules[0])
+		}
+	} else if ordering == "6" {
+		return func(lec_a Lecture, lec_b Lecture) int {
+			return strings.Compare(lec_a.Flags, lec_b.Flags)
+		}
+	}
+	return nil
 }
 
 func compareModules(mod_a string, mod_b string) int {

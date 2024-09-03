@@ -49,9 +49,21 @@ func RunServer() {
 		} */
 		scr.Url = r.FormValue("url")
 		scr.Semester = r.FormValue("semester")
-		scr.createUrlOffset()
-		scr.loadLectures()
-		slices.SortFunc(scr.lectures, compareLecsByDays)
+		ordered_val := r.FormValue("ordered")
+		if ordered_val == "" {
+			scr.createUrlOffset()
+			scr.loadLectures()
+			ordered_val = "0"
+		}
+		slices.SortFunc(scr.lectures, compareLecFuncs(ordered_val))
+
+		tmplChart.Execute(rw, struct {
+			Lectures *[]Lecture
+			Semester string
+		}{Lectures: &scr.lectures, Semester: scr.lectures[0].Semester})
+	}
+
+	downloadRoute := func(rw http.ResponseWriter, r *http.Request) {
 		lecsJson, err := json.MarshalIndent(&scr.lectures, "", "    ")
 		if err != nil {
 			fmt.Printf("error with json serialization: %v\n", err)
@@ -63,14 +75,6 @@ func RunServer() {
 			fmt.Printf("error saving JSON to file: %v\n", err)
 			return
 		}
-
-		tmplChart.Execute(rw, struct {
-			Lectures *[]Lecture
-			Semester string
-		}{Lectures: &scr.lectures, Semester: scr.lectures[0].Semester})
-	}
-
-	downloadRoute := func(rw http.ResponseWriter, r *http.Request) {
 		cmd := exec.Command("java", "-jar", "lfw.jar", "lectures.json")
 		if err := cmd.Run(); err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
