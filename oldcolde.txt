@@ -1,0 +1,129 @@
+-- main.go
+
+/* scr := Scraper{url: "https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100"}
+
+	//start := time.Now()
+	test := scr.getLectures()
+	//duration := time.Since(start)
+	slices.SortFunc(test, compareLecsByDays)
+	fmt.Println(test[2].Title)
+	fmt.Println(test[2].TextRaw)
+	fmt.Println(test[2].Commentary) */
+
+	/* for _, elem := range test {
+		fmt.Println(elem.day, elem.time)
+	} */
+	//fmt.Printf("duration: %v\n", duration)
+	/* fmt.Print("Press any key...")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan() */
+
+	/* scr.getLecturesLinks("https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100")
+	//fmt.Println(scr.lecturesLinks)
+	newLec := newLecture(scr.getLectureText(scr.lecturesLinks[3]))
+	fmt.Printf("newLec.textRaw: %v\n", newLec.textRaw)
+	fmt.Printf("newLec.title: %v\n", newLec.title)
+	fmt.Printf("newLec.lecturers: %v\n", newLec.lecturers)
+	fmt.Printf("newLec.day: %v\n", newLec.day)
+	fmt.Printf("newLec.time: %v\n", newLec.time)
+	fmt.Printf("newLec.room: %v\n", newLec.room)
+	fmt.Printf("newLec.modules: %v\n", newLec.modules)
+	fmt.Printf("newLec.commentary: %v\n", newLec.commentary)
+	fmt.Printf("newLec.flags: %v\n", newLec.flags) */
+
+	/* for _, elem := range newLec.dayPattern.FindStringSubmatch(newLec.textRaw) {
+		fmt.Printf("elem: %v\n", elem)
+	} */
+
+	/* lec := newLecture("re", "re")
+	fmt.Println(lec.commentaryPattern.String()) */
+	//RunTutServer()
+
+	/* 	r, _ := regexp.Compile(`\w+`)
+	   	newStr := r.FindAll(content, -1)
+	   	fmt.Printf("newStr: %v\n", newStr)
+	   	strList := mapList(newStr, func(elem []byte) string {
+	   		return string(elem)
+	   	})
+	   	fmt.Printf("strList: %v\n", strList) */
+
+	/* 	patt, _ := regexp.Compile(`\d+:\d+`)
+	   	testStr := "hello 122:243 3 teststaata"
+	   	testMatch := patt.Find([]byte(testStr))
+	   	rslt := string(testMatch)
+	   	if len(rslt) == 0 {
+	   		fmt.Println("No match, its empty!")
+	   	} else {
+	   		fmt.Println(rslt)
+	   	} */
+
+-- Scraper.go
+
+/* func (s *Scraper) getLectures() []Lecture {
+	if s.lectures == nil {
+		s.loadLecturesLinks()
+
+		// Create a channel to handle lecture links
+		//lectureChan := make(chan *Lecture, len(s.lecturesLinks))
+		var wg sync.WaitGroup
+
+		// Worker function to process lecture links
+		worker := func(link string) {
+			defer wg.Done()
+			s.lectures = append(s.lectures, newLecture(getHtmlText(link), link))
+		}
+
+		// Launch goroutines to process lecture links
+		for _, link := range s.lecturesLinks {
+			wg.Add(1)
+			go worker(link)
+		}
+
+		// Close the channel once all goroutines are done
+		wg.Wait()
+		//close(lectureChan)
+
+		// Collect results from the channel
+		// for lecture := range lectureChan {
+		//	s.lectures = append(s.lectures, lecture)
+		//}
+	}
+	return s.lectures
+} */
+
+/* func (s *Scraper) getLectures() []Lecture {
+
+	if s.lectures == nil {
+		//s.loadLecturesLinks()
+		s.loadLecturesLinksGQ()
+		for _, elem := range s.lecturesLinks {
+			s.lectures = append(s.lectures, newLecture(s.getLectureText(elem)))
+		}
+	}
+	return s.lectures
+} */
+
+/* func (s *Scraper) loadLecturesLinksC() {
+	lecLinks := make([]string, 0)
+
+	col := colly.NewCollector()
+
+	col.OnHTML("td", func(elems *colly.HTMLElement) {
+		elems.ForEach("a", func(i int, linkElem *colly.HTMLElement) {
+			lecLinks = append(lecLinks, linkElem.Attr("href")+s.offset)
+		})
+	})
+
+	col.OnError(func(res *colly.Response, e error) {
+		fmt.Println("Error: ", e)
+	})
+
+	col.OnScraped(func(res *colly.Response) {
+		s.lecturesLinks = lecLinks
+	})
+
+	err := col.Visit(s.url)
+	if err != nil {
+		log.Fatal(err)
+	}
+} */

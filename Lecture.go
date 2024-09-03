@@ -48,6 +48,7 @@ func newLecture(text string, url string) Lecture {
 	semesterSubMatch := lec.semesterPattern.FindStringSubmatch(lec.TextRaw)
 	if len(semesterSubMatch) >= 2 {
 		lec.Semester = semesterSubMatch[1]
+		lec.Semester = lec.Semester[:5] + lec.Semester[7:]
 	} else {
 		lec.Semester = "n.a."
 	}
@@ -155,13 +156,22 @@ func lessTime(time_a_str string, time_b_str string) bool {
 	} else {
 		time_a, _ := strconv.Atoi(time_a_str[0:2])
 		time_b, _ := strconv.Atoi(time_b_str[0:2])
-		return time_a < time_b
+		if time_a == time_b {
+			time_alt_a, _ := strconv.Atoi(time_a_str[3:])
+			time_alt_b, _ := strconv.Atoi(time_b_str[3:])
+			return time_alt_a < time_alt_b
+		} else {
+			return time_a < time_b
+		}
+
 	}
 }
 
 func compareLecsByDays(lec_a Lecture, lec_b Lecture) int {
 	if lessDay(lec_a.Day, lec_b.Day) || ((lec_a.Day == lec_b.Day) && lessTime(lec_a.Time, lec_b.Time)) {
 		return -1
+	} else if (lec_a.Day == lec_b.Day) && (lec_a.Time == lec_b.Time) {
+		return strings.Compare(lec_a.Title, lec_b.Title)
 	} else {
 		return 1
 	}

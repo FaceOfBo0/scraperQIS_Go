@@ -23,15 +23,6 @@ func Logging() Middleware {
 	}
 }
 
-/* func Saving() Middleware {
-	return func(hf http.HandlerFunc) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
-
-			hf(rw, r)
-		}
-	}
-} */
-
 func Chain(hf http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
 	for _, m := range middlewares {
 		hf = m(hf)
@@ -61,7 +52,7 @@ func RunServer() {
 		scr.createUrlOffset()
 		scr.loadLectures()
 		slices.SortFunc(scr.lectures, compareLecsByDays)
-		lecsJson, err := json.Marshal(&scr.lectures)
+		lecsJson, err := json.MarshalIndent(&scr.lectures, "", "    ")
 		if err != nil {
 			fmt.Printf("error with json serialization: %v\n", err)
 			return
