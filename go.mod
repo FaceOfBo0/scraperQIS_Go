@@ -1,4 +1,4 @@
-module scraperQIS_Go
+module scraperQIS
 
 go 1.23.0
 
