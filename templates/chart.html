@@ -6,8 +6,8 @@
     <style>
         body { padding: 20px; }
         table {
-            border-collapse: collapse; /* This ensures that adjacent borders are combined into a single border */
-            border: 1px solid black; /* The border style and color */
+             /*border-collapse: collapse; /* This ensures that adjacent borders are combined into a single border */
+             /*border: 1px solid black; /* The border style and color */
         }
         th, td {
             border: 1px solid black; /* The border style and color for table header and data cells */
@@ -45,18 +45,18 @@
 
 <br>
 <br>
-<table>
-    <tr>
-        <th><h3><a href="/chart?ordered=0">Tag</a></h3></th>
-        <th><h3><a href="/chart?ordered=1">Zeit</a></h3></th>
-        <th><h3><a href="/chart?ordered=2">Veranstaltung</a></h3></th>
-        <th><h3><a href="/chart?ordered=3">Lehrende</a></h3></th>
-        <th><h3><a href="/chart?ordered=4">Raum</a></h3></th>
-        <th><h3><a href="/chart?ordered=5">Module</a></h3></th>
-        <th><h3><a href="/chart?ordered=6">VRMB</a></h3></th>
-
-
-    </tr>
+<table class="table table-hover table-bordered table-dark">
+    <thead>
+        <tr>
+            <th><h4><a href="/chart?ordered=0">Tag</a></h4></th>
+            <th><h4><a href="/chart?ordered=1">Zeit</a></h4></th>
+            <th><h4><a href="/chart?ordered=2">Veranstaltung</a></h4></th>
+            <th><h4><a href="/chart?ordered=3">Lehrende</a></h4></th>
+            <th><h4><a href="/chart?ordered=4">Raum</a></h4></th>
+            <th><h4><a href="/chart?ordered=5">Module</a></h4></th>
+            <th><h4><a href="/chart?ordered=6">VRMB</a></h4></th>
+        </tr>
+    </thead>
     {{range .Lectures}}
     <tr>
         <td>{{.Day}}</td>
