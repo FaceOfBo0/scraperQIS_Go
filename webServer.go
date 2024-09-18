@@ -79,7 +79,8 @@ func RunServer() {
 				if strings.Contains(strings.ToLower(lecture.Title), strings.ToLower(searchQuery)) ||
 					strings.Contains(strings.ToLower(lecture.Lecturers), strings.ToLower(searchQuery)) ||
 					strings.Contains(strings.ToLower(lecture.Room), strings.ToLower(searchQuery)) ||
-					strings.Contains(strings.ToLower(lecture.Time), strings.ToLower(searchQuery)) {
+					strings.Contains(strings.ToLower(lecture.Time), strings.ToLower(searchQuery)) ||
+					slices.Contains(lecture.Modules, strings.ToUpper(searchQuery)) {
 					filteredLectures = append(filteredLectures, lecture)
 				}
 			}
