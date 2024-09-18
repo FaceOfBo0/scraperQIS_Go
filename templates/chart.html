@@ -14,7 +14,7 @@
             padding: 8px; 
         } */
         div.mb-3 {
-            width: 500px;
+            width: 400px;
             margin-top: 25px;
             margin-bottom: 25px;
         }
@@ -24,9 +24,9 @@
             border-color: #33475b;
         }
         input.form-control {
-            border-color: #33475b;
+            border-color: whitesmoke;
             color: whitesmoke;
-            background-color: #2B2A33;
+            background-color: whitesmoke;
         }
     </style>
     <title>LSF Wochenplan Editor</title>
@@ -42,19 +42,28 @@
 <form id="downloadForm">
     <button class="btn btn-primary" style="color: whitesmoke" type="button" onclick="saveFile()">Save ODS File</button>
 </form>
+<br>
+<form id="searchForm" method="get" action="/chart">
+    <div class="input-group mb-3" id="urlForm">
+        <input class="form-control" type="text" name="searchQuery" placeholder="Search...">
+        <input type="hidden" name="ordered" value="{{.Ordered}}">
+        <input type="hidden" name="orderDir" value="{{.OrderDir}}">
+        <button class="btn btn-primary" style="color: whitesmoke" type="submit">Search</button>
+    </div>
+</form>
 
 <br>
 <br>
 <table class="table table-hover table-bordered table-dark">
     <thead>
         <tr>
-            <th><h4><a href="/chart?ordered=0">Tag</a></h4></th>
-            <th><h4><a href="/chart?ordered=1">Zeit</a></h4></th>
-            <th><h4><a href="/chart?ordered=2">Veranstaltung</a></h4></th>
-            <th><h4><a href="/chart?ordered=3">Lehrende</a></h4></th>
-            <th><h4><a href="/chart?ordered=4">Raum</a></h4></th>
-            <th><h4><a href="/chart?ordered=5">Module</a></h4></th>
-            <th><h4><a href="/chart?ordered=6">VRMB</a></h4></th>
+            <th><h4><a href="/chart?ordered=0&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Tag</a></h4></th>
+            <th><h4><a href="/chart?ordered=1&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Zeit</a></h4></th>
+            <th><h4><a href="/chart?ordered=2&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Veranstaltung</a></h4></th>
+            <th><h4><a href="/chart?ordered=3&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Lehrende</a></h4></th>
+            <th><h4><a href="/chart?ordered=4&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Raum</a></h4></th>
+            <th><h4><a href="/chart?ordered=5&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Module</a></h4></th>
+            <th><h4><a href="/chart?ordered=6&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">VRMB</a></h4></th>
         </tr>
     </thead>
     {{range .Lectures}}

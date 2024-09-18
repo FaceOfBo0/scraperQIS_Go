@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -50,17 +51,59 @@ func RunServer() {
 		scr.Url = r.FormValue("url")
 		scr.Semester = r.FormValue("semester")
 		ordered_val := r.FormValue("ordered")
+		orderDir := r.FormValue("orderDir")
+		lastOrdered := r.FormValue("lastOrdered")
+		searchQuery := r.FormValue("searchQuery")
 		if ordered_val == "" {
 			scr.createUrlOffset()
 			scr.loadLectures()
 			ordered_val = "0"
+			orderDir = "asc"
+		} else {
+			if lastOrdered != ordered_val {
+				orderDir = "asc"
+			} else {
+				if orderDir == "asc" {
+					orderDir = "desc"
+				} else {
+					orderDir = "asc"
+				}
+			}
 		}
-		slices.SortFunc(scr.lectures, compareLecFuncs(ordered_val))
+
+		// Filter lectures based on search query
+		filteredLectures := scr.lectures
+		if searchQuery != "" {
+			filteredLectures = []Lecture{}
+			for _, lecture := range scr.lectures {
+				if strings.Contains(strings.ToLower(lecture.Title), strings.ToLower(searchQuery)) ||
+					strings.Contains(strings.ToLower(lecture.Lecturers), strings.ToLower(searchQuery)) ||
+					strings.Contains(strings.ToLower(lecture.Room), strings.ToLower(searchQuery)) ||
+					strings.Contains(strings.ToLower(lecture.Time), strings.ToLower(searchQuery)) {
+					filteredLectures = append(filteredLectures, lecture)
+				}
+			}
+		}
+
+		sortFunc := compareLecFuncs(ordered_val)
+		if orderDir == "desc" {
+			sortFunc = func(lec_a, lec_b Lecture) int {
+				return -compareLecFuncs(ordered_val)(lec_a, lec_b)
+			}
+		}
+
+		slices.SortFunc(filteredLectures, sortFunc)
 
 		tmplChart.Execute(rw, struct {
 			Lectures *[]Lecture
 			Semester string
-		}{Lectures: &scr.lectures, Semester: scr.lectures[0].Semester})
+			OrderDir string
+			Ordered  string
+		}{
+			Lectures: &filteredLectures,
+			Ordered:  ordered_val,
+			Semester: scr.lectures[0].Semester,
+			OrderDir: orderDir})
 	}
 
 	downloadRoute := func(rw http.ResponseWriter, r *http.Request) {
