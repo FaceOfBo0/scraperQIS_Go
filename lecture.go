@@ -12,6 +12,10 @@ var (
 		{"Di", "Mi"}, {"Di", "Do"}, {"Di", "Fr"}, {"Mi", "Do"}, {"Mi", "Fr"}, {"Do", "Fr"}, {"Mo", "Sa"},
 		{"Mo", "So"}, {"Di", "Sa"}, {"Di", "So"}, {"Mi", "Sa"}, {"Mi", "So"}, {"Do", "Sa"}, {"Do", "So"},
 		{"Fr", "Sa"}, {"Fr", "So"}, {"Sa", "So"}}
+	basicMods      = []string{"BM1", "BM2", "BM3"}
+	proSeminarMods = []string{"AM1", "AM2", "AM3", "AM4", "AM5"}
+	seminarMods    = []string{"VM1", "VM2", "VM3"}
+	masterMods     = []string{"GM1", "GM2", "GM3"}
 )
 
 type Lecture struct {
@@ -39,7 +43,7 @@ func newLecture(text string, url string) Lecture {
 	lec.semesterPattern = regexp.MustCompile(`<td class="mod_n_basic" headers="basic_5">(.*?)</td>`)
 	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
 	lec.titlePattern = regexp.MustCompile(`<h1>(.*) - Einzelansicht`)
-	lec.roomPattern = regexp.MustCompile(`<a class="regular" title="Details ansehen zu Raum ([A-Z][A-Z] \d*\.?\d+).*?"`)
+	lec.roomPattern = regexp.MustCompile(`<a class="regular" title="Details ansehen zu Raum (([A-Z][A-Z] \d*\.?\d+)|([A-Z][A-Z][A-Z] [A-Z])|([0-9][A-Z]-[0-9][0-9][0-9])).*?"`)
 	lec.modulesPattern = regexp.MustCompile("BM 1|BM 2|BM 3|AM 1|AM 2|AM 3|AM 4|AM 5|VM 1|VM 2|VM 3|GM 1|GM 2|GM 3")
 	lec.lecturersPattern = regexp.MustCompile(`Zust.ndigkeit.*?<a.*?> (.*?) <.a>`)
 	lec.commentaryPattern = regexp.MustCompile(`Kommentar.*?<p>(.*)</p>.*Einsortiert in`)
@@ -118,7 +122,7 @@ func newLecture(text string, url string) Lecture {
 
 	lec.Modules = lec.modulesPattern.FindAllString(lec.TextRaw, -1)
 	lec.Modules = mapList(lec.Modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
-	slices.SortFunc(lec.Modules, compareModules)
+	slices.SortFunc(lec.Modules, compareModule)
 	lec.Modules = slices.Compact(lec.Modules)
 	if len(lec.Modules) == 0 {
 		lec.Modules = append(lec.Modules, "_")
@@ -131,7 +135,7 @@ func newLecture(text string, url string) Lecture {
 	if lec.Room != "n.a." {
 		lec.Flags = replaceIdx(lec.Flags, "R", 1)
 	}
-	if len(lec.Modules) != 0 {
+	if !slices.Contains(lec.Modules, "_") {
 		lec.Flags = replaceIdx(lec.Flags, "M", 2)
 	}
 	if lec.Commentary != "n.a." && lec.Commentary != "..." && lec.Commentary != "" {
@@ -171,19 +175,69 @@ func lessTime(time_a_str string, time_b_str string) bool {
 	}
 }
 
-func compareLecsByDays(lec_a Lecture, lec_b Lecture) int {
+func compareModule(mod_a string, mod_b string) int {
+	if (strings.HasPrefix(mod_a, "BM") && strings.HasPrefix(mod_b, "AM")) || (strings.HasPrefix(mod_a, "BM") && strings.HasPrefix(mod_b, "VM")) ||
+		(strings.HasPrefix(mod_a, "BM") && strings.HasPrefix(mod_b, "GM")) || (strings.HasPrefix(mod_a, "AM") && strings.HasPrefix(mod_b, "VM")) ||
+		(strings.HasPrefix(mod_a, "AM") && strings.HasPrefix(mod_b, "GM")) || (strings.HasPrefix(mod_a, "VM") && strings.HasPrefix(mod_b, "GM")) {
+		return -1
+	} else {
+		if mod_a[:2] == mod_b[:2] {
+			if int(mod_a[2]) < int(mod_b[2]) {
+				return -1
+			}
+		}
+		return 1
+	}
+}
+
+func compareLecsDefault(lec_a Lecture, lec_b Lecture) int {
 	if lessDay(lec_a.Day, lec_b.Day) || ((lec_a.Day == lec_b.Day) && lessTime(lec_a.Time, lec_b.Time)) {
 		return -1
 	} else if (lec_a.Day == lec_b.Day) && (lec_a.Time == lec_b.Time) {
+		return compareLecsByModules(lec_a, lec_b)
+	} else {
+		return 1
+	}
+}
+
+func equalLecType(mods_a []string, mods_b []string) bool {
+	return (slices.ContainsFunc(mods_a, containsBasicMods) && slices.ContainsFunc(mods_b, containsBasicMods)) ||
+		(slices.ContainsFunc(mods_a, containsProSeminarMods) && slices.ContainsFunc(mods_b, containsProSeminarMods)) ||
+		(slices.ContainsFunc(mods_a, containsSeminarMods) && slices.ContainsFunc(mods_a, containsMasterMods) && slices.ContainsFunc(mods_b, containsSeminarMods) && slices.ContainsFunc(mods_b, containsMasterMods)) ||
+		(!slices.ContainsFunc(mods_a, containsSeminarMods) && slices.ContainsFunc(mods_a, containsMasterMods) && !slices.ContainsFunc(mods_b, containsSeminarMods) && slices.ContainsFunc(mods_b, containsMasterMods))
+}
+
+func containsBasicMods(module string) bool {
+	return slices.Contains(basicMods, module)
+}
+
+func containsProSeminarMods(module string) bool {
+	return slices.Contains(proSeminarMods, module)
+}
+
+func containsSeminarMods(module string) bool {
+	return slices.Contains(seminarMods, module)
+}
+
+func containsMasterMods(module string) bool {
+	return slices.Contains(masterMods, module)
+}
+
+func compareLecsByModules(lec_a Lecture, lec_b Lecture) int {
+	if (slices.ContainsFunc(lec_a.Modules, containsBasicMods) && (slices.ContainsFunc(lec_b.Modules, containsProSeminarMods) || slices.ContainsFunc(lec_b.Modules, containsSeminarMods) || slices.ContainsFunc(lec_b.Modules, containsMasterMods))) ||
+		(slices.ContainsFunc(lec_a.Modules, containsProSeminarMods) && (slices.ContainsFunc(lec_b.Modules, containsSeminarMods) || slices.ContainsFunc(lec_b.Modules, containsMasterMods))) ||
+		(slices.ContainsFunc(lec_a.Modules, containsSeminarMods) && slices.ContainsFunc(lec_b.Modules, containsMasterMods)) || slices.Contains(lec_b.Modules, "_") {
+		return -1
+	} else if equalLecType(lec_a.Modules, lec_b.Modules) {
 		return strings.Compare(lec_a.Title, lec_b.Title)
 	} else {
 		return 1
 	}
 }
 
-func compareLecFuncs(ordering string) func(lec_a Lecture, lec_b Lecture) int {
+func compareLecsFuncs(ordering string) func(lec_a Lecture, lec_b Lecture) int {
 	if ordering == "0" {
-		return compareLecsByDays
+		return compareLecsDefault
 	} else if ordering == "1" {
 		return func(lec_a Lecture, lec_b Lecture) int {
 			return strings.Compare(lec_a.Time, lec_b.Time)
@@ -210,19 +264,4 @@ func compareLecFuncs(ordering string) func(lec_a Lecture, lec_b Lecture) int {
 		}
 	}
 	return nil
-}
-
-func compareModules(mod_a string, mod_b string) int {
-	if (strings.HasPrefix(mod_a, "BM") && strings.HasPrefix(mod_b, "AM")) || (strings.HasPrefix(mod_a, "BM") && strings.HasPrefix(mod_b, "VM")) ||
-		(strings.HasPrefix(mod_a, "BM") && strings.HasPrefix(mod_b, "GM")) || (strings.HasPrefix(mod_a, "AM") && strings.HasPrefix(mod_b, "VM")) ||
-		(strings.HasPrefix(mod_a, "AM") && strings.HasPrefix(mod_b, "GM")) || (strings.HasPrefix(mod_a, "VM") && strings.HasPrefix(mod_b, "GM")) {
-		return -1
-	} else {
-		if mod_a[:2] == mod_b[:2] {
-			if int(mod_a[2]) < int(mod_b[2]) {
-				return -1
-			}
-		}
-		return 1
-	}
 }

@@ -86,10 +86,10 @@ func RunServer() {
 			}
 		}
 
-		sortFunc := compareLecFuncs(ordered_val)
+		sortFunc := compareLecsFuncs(ordered_val)
 		if orderDir == "desc" {
 			sortFunc = func(lec_a, lec_b Lecture) int {
-				return -compareLecFuncs(ordered_val)(lec_a, lec_b)
+				return -compareLecsFuncs(ordered_val)(lec_a, lec_b)
 			}
 		}
 
