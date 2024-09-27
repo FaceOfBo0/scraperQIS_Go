@@ -80,7 +80,7 @@ func RunServer() {
 					strings.Contains(strings.ToLower(lecture.Lecturers), strings.ToLower(searchQuery)) ||
 					strings.Contains(strings.ToLower(lecture.Room), strings.ToLower(searchQuery)) ||
 					strings.Contains(strings.ToLower(lecture.Time), strings.ToLower(searchQuery)) ||
-					slices.Contains(lecture.Modules, strings.ToUpper(searchQuery)) {
+					slices.Contains(lecture.Modules, searchQuery) {
 					filteredLectures = append(filteredLectures, lecture)
 				}
 			}
@@ -94,7 +94,6 @@ func RunServer() {
 		}
 
 		slices.SortFunc(filteredLectures, sortFunc)
-
 		tmplChart.Execute(rw, struct {
 			Lectures *[]Lecture
 			Semester string
@@ -122,6 +121,7 @@ func RunServer() {
 		cmd := exec.Command("java", "-jar", "lfw.jar", "lectures.json")
 		if err := cmd.Run(); err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		rw.WriteHeader(http.StatusOK)
 	}
