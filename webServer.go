@@ -33,14 +33,21 @@ func Chain(hf http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
 
 func RunServer() {
 
-	scr := Scraper{}
+	scr := Scraper{
+		Url: "https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100",
+		SemesterUrl: "https://qis.server.uni-frankfurt.de/qisserver/rds?state=change&type=6&moduleParameter=semesterSelect&nextdir=" +
+			"change&next=SearchSelect.vm&subdir=applications&targettype=7&targetstate=change&getglobal=semester"}
 	// load template files
 	tmplRoot := template.Must(template.ParseFiles("templates/root.html"))
 	tmplChart := template.Must(template.ParseFiles("templates/chart.html"))
 
 	//define route handler functions
 	rootRoute := func(rw http.ResponseWriter, r *http.Request) {
-		tmplRoot.Execute(rw, nil)
+		tmplRoot.Execute(rw, struct {
+			Semesters []Semester
+		}{
+			Semesters: scr.getSemesters(),
+		})
 	}
 
 	chartRoute := func(rw http.ResponseWriter, r *http.Request) {
@@ -48,7 +55,6 @@ func RunServer() {
 			tmplRoot.Execute(rw, nil)
 			return
 		} */
-		scr.Url = r.FormValue("url")
 		scr.Semester = r.FormValue("semester")
 		ordered_val := r.FormValue("ordered")
 		orderDir := r.FormValue("orderDir")
@@ -103,7 +109,8 @@ func RunServer() {
 			Lectures: &filteredLectures,
 			Ordered:  ordered_val,
 			Semester: scr.lectures[0].Semester,
-			OrderDir: orderDir})
+			OrderDir: orderDir,
+		})
 	}
 
 	downloadRoute := func(rw http.ResponseWriter, r *http.Request) {

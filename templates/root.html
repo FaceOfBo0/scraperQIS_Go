@@ -33,17 +33,15 @@
     <h1>LSF Wochenplan Editor</h1>
     <hr width="410px">
     <form action="/chart" method="get">
-        <div class="input-group mb-3" id="urlForm">
-            <div class="input-group-prepend">
-                <span class="input-group-text spanClass">LSF-Link</span>
-            </div>
-            <input value="https://qis.server.uni-frankfurt.de/qisserver/rds?state=verpublish&publishContainer=lectureInstList&publishid=80100" type="text" id="urlInp" name="url" class="form-control" required>
-        </div>
         <div class="input-group mb-3" id="semesterForm">
             <div class="input-group-prepend">
                 <span class="input-group-text spanClass">Semester</span>
             </div>
-            <input placeholder="2024.1" id="semesterInp" name="semester" class="form-control">
+            <select id="semesterInp" name="semester" class="form-control">
+                {{range .Semesters}}
+                <option value="{{.Value}}">{{.Name}}</option>
+                {{end}}
+            </select>
             <div class="buttonForm input-group-append">
                 <button id="loadBtn" class="btn btn-primary" type="submit" style="color: whitesmoke">Plan laden</button>
             </div>

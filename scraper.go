@@ -22,10 +22,46 @@ func getHtmlText(url string) string {
 	return string(content)
 }
 
+type Semester struct {
+	Name, Value string
+}
+
 type Scraper struct {
-	Semester, Url string
+	Semester, Url, SemesterUrl string
 	//lecturesLinks []string
 	lectures []Lecture
+}
+
+func (s *Scraper) getSemesters() []Semester {
+	doc := getDocFromUrl(s.SemesterUrl)
+	selection := doc.Find("a.regular[name^='W'], a.regular[name^='S']")
+	semesters := make([]Semester, 0, selection.Length())
+	selection.Each(func(i int, sel *goquery.Selection) {
+		semName := strings.TrimSpace(sel.Text())
+		var semVal string
+		if strings.HasPrefix(semName, "Winter") {
+			semVal = semName[len(semName)-7:len(semName)-3] + ".2"
+		} else {
+			semVal = semName[len(semName)-4:] + ".1"
+		}
+		semesters = append(semesters, Semester{Name: semName, Value: semVal})
+	})
+	return semesters
+}
+
+func getDocFromUrl(url string) *goquery.Document {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return doc
 }
 
 func (s *Scraper) createUrlOffset() {
@@ -41,16 +77,7 @@ func (s *Scraper) createUrlOffset() {
 
 func (s *Scraper) loadLectures() {
 
-	resp, err := http.Get(s.Url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
+	doc := getDocFromUrl(s.Url)
 
 	// Create a channel to collect links
 	lecturesChan := make(chan Lecture)
