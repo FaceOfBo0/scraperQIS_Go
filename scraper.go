@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -46,6 +47,7 @@ func (s *Scraper) getSemesters() []Semester {
 		}
 		semesters = append(semesters, Semester{Name: semName, Value: semVal})
 	})
+	slices.Reverse(semesters)
 	return semesters
 }
 
