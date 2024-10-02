@@ -39,7 +39,7 @@ func newLecture(text string, url string) Lecture {
 	//  initialize Lecture with RegExs for all the parameters
 	lec := Lecture{TextRaw: text, Link: url}
 	lec.TextRaw = strings.Join(strings.Fields(lec.TextRaw), " ")
-	lec.dayPattern = regexp.MustCompile(`([A-Z][a-z])\..*\d+:\d+`)
+	lec.dayPattern = regexp.MustCompile(`(Mo|Di|Mi|Do|Fr|Sa)\..*\d+:\d+`)
 	lec.semesterPattern = regexp.MustCompile(`<td class="mod_n_basic" headers="basic_5">(.*?)</td>`)
 	lec.timePattern = regexp.MustCompile(`\d+:\d+`)
 	lec.titlePattern = regexp.MustCompile(`<h1>(.*) - Einzelansicht`)
