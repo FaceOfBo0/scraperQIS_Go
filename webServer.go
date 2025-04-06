@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -133,8 +134,33 @@ func RunServer() {
 		rw.WriteHeader(http.StatusOK)
 	}
 
-	saveMetaRoute := func(rw http.ResponseWriter, r *http.Request) {
+	catalogRoute := func(rw http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Redirect(rw, r, "/", http.StatusSeeOther)
+			return
+		}
 
+		// Maximum upload of 10 MB files
+		r.ParseMultipartForm(10 << 20)
+
+		// Get form values
+		titleColumn, _ := strconv.Atoi(r.FormValue("title"))
+		olatColumn, _ := strconv.Atoi(r.FormValue("olat"))
+
+		// Get the file from form data
+		file, _, err := r.FormFile("file")
+		if err != nil {
+			fmt.Printf("Error retrieving file: %v\n", err)
+			http.Error(rw, "Error retrieving file", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		catInfos := getCatInfos(file, titleColumn, olatColumn)
+
+		for i, v := range catInfos {
+			fmt.Printf("%v: %v\n", i, v)
+		}
 	}
 
 	// Bind handler functions and start server
@@ -142,7 +168,7 @@ func RunServer() {
 	http.HandleFunc("/", rootRoute)
 	http.HandleFunc("/chart", Chain(chartRoute, Logging()))
 	http.HandleFunc("/download", Chain(downloadRoute, Logging()))
-	http.HandleFunc("/savemeta", Chain(saveMetaRoute, Logging()))
+	http.HandleFunc("/catalog", Chain(catalogRoute, Logging()))
 	http.ListenAndServe(":4567", nil)
 
 }

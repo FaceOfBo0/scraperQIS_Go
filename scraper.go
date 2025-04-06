@@ -11,7 +11,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type MetaInfo struct {
+type CatalogInfo struct {
 	lecTitle string
 	lecLink  string
 	olatLink string
@@ -27,10 +27,10 @@ type Scraper struct {
 	lectures []Lecture
 }
 
-func getMetaInfos(file_path string) []MetaInfo {
-	infos := make([]MetaInfo, 0)
+func getCatInfos(reader io.Reader, titleCol, olatCol int) []CatalogInfo {
+	infos := make([]CatalogInfo, 0)
 
-	f, err := excelize.OpenFile(file_path)
+	f, err := excelize.OpenReader(reader)
 	if err != nil {
 		panic(err)
 	}
@@ -45,12 +45,12 @@ func getMetaInfos(file_path string) []MetaInfo {
 	rows, _ := f.GetRows(sheetName)
 
 	for i := range len(rows) {
-		cell_title, _ := excelize.CoordinatesToCellName(3, i+1)
-		cell_olat, _ := excelize.CoordinatesToCellName(19, i+1)
+		cell_title, _ := excelize.CoordinatesToCellName(titleCol, i+1)
+		cell_olat, _ := excelize.CoordinatesToCellName(olatCol, i+1)
 		if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
 			if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
 				lec_title, _ := f.GetCellValue(sheetName, cell_title)
-				infos = append(infos, MetaInfo{lecTitle: lec_title, lecLink: link, olatLink: olat})
+				infos = append(infos, CatalogInfo{lecTitle: lec_title, lecLink: link, olatLink: olat})
 			}
 		}
 	}
