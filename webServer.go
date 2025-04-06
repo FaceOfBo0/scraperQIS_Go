@@ -133,11 +133,16 @@ func RunServer() {
 		rw.WriteHeader(http.StatusOK)
 	}
 
+	saveMetaRoute := func(rw http.ResponseWriter, r *http.Request) {
+
+	}
+
 	// Bind handler functions and start server
 	fmt.Println("Server is running on localhost:4567..")
 	http.HandleFunc("/", rootRoute)
 	http.HandleFunc("/chart", Chain(chartRoute, Logging()))
 	http.HandleFunc("/download", Chain(downloadRoute, Logging()))
+	http.HandleFunc("/savemeta", Chain(saveMetaRoute, Logging()))
 	http.ListenAndServe(":4567", nil)
 
 }

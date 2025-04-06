@@ -2,25 +2,19 @@ package main
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"slices"
 	"strings"
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/xuri/excelize/v2"
 )
 
-func getHtmlText(url string) string {
-	res, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	content, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(content)
+type MetaInfo struct {
+	lecTitle string
+	lecLink  string
+	olatLink string
 }
 
 type Semester struct {
@@ -31,6 +25,63 @@ type Scraper struct {
 	Semester, Url, SemesterUrl string
 	//lecturesLinks []string
 	lectures []Lecture
+}
+
+func getMetaInfos(file_path string) []MetaInfo {
+	infos := make([]MetaInfo, 0)
+
+	f, err := excelize.OpenFile(file_path)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			print(err)
+		}
+	}()
+
+	sheetName := f.GetSheetMap()[1]
+	rows, _ := f.GetRows(sheetName)
+
+	for i := range len(rows) {
+		cell_title, _ := excelize.CoordinatesToCellName(3, i+1)
+		cell_olat, _ := excelize.CoordinatesToCellName(19, i+1)
+		if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
+			if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
+				lec_title, _ := f.GetCellValue(sheetName, cell_title)
+				infos = append(infos, MetaInfo{lecTitle: lec_title, lecLink: link, olatLink: olat})
+			}
+		}
+	}
+	return infos
+}
+
+func getHtmlText(url string) string {
+	res, err := http.Get(url)
+	if err != nil {
+		print(err)
+	}
+	content, err := io.ReadAll(res.Body)
+	if err != nil {
+		print(err)
+	}
+	return string(content)
+}
+
+func getDocFromUrl(url string) *goquery.Document {
+	resp, err := http.Get(url)
+	if err != nil {
+		print(err)
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		print(err)
+	}
+
+	return doc
 }
 
 func (s *Scraper) getSemesters() []Semester {
@@ -49,21 +100,6 @@ func (s *Scraper) getSemesters() []Semester {
 	})
 	slices.Reverse(semesters)
 	return semesters
-}
-
-func getDocFromUrl(url string) *goquery.Document {
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return doc
 }
 
 func (s *Scraper) createUrlOffset() {
