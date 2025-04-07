@@ -1,108 +1,195 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-
-    <style>
-        body { padding: 20px; }
-        /* table {
+    <head>
+        <style>
+            body {
+                padding: 20px;
+            }
+            /* table {
              border-collapse: collapse;
-             border: 1px solid black; 
+             border: 1px solid black;
         } */
-        /* th, td {
-            border: 1px solid black; 
-            padding: 8px; 
+            /* th, td {
+            border: 1px solid black;
+            padding: 8px;
         } */
-        div.mb-3 {
-            width: 400px;
-            margin-top: 25px;
-            margin-bottom: 25px;
-        }
-        span.spanClass{
-            background-color: #33475b;
-            color: whitesmoke;
-            border-color: #33475b;
-        }
-        input.form-control {
-            border-color: whitesmoke;
-            color: whitesmoke;
-            background-color: whitesmoke;
-        }
-    </style>
-    <title>LSF Wochenplan Editor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-          rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
-          crossorigin="anonymous">
-</head>
+            div.mb-3 {
+                width: 400px;
+                margin-top: 25px;
+                margin-bottom: 25px;
+            }
+            span.spanClass {
+                background-color: #33475b;
+                color: whitesmoke;
+                border-color: #33475b;
+            }
+            input.form-control {
+                border-color: whitesmoke;
+                color: whitesmoke;
+                background-color: whitesmoke;
+            }
+        </style>
+        <title>LSF Wochenplan IfP</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+            crossorigin="anonymous"
+        />
+    </head>
 
-<body style="background-color: #2B2A33; color: whitesmoke">
-<h1>LSF Wochenplan</h1>
-<h2>{{ .Semester}}</h2>
-<br>
-<form id="downloadForm">
-    <button class="btn btn-primary" style="color: whitesmoke" type="button" onclick="saveFile()">Save ODS File</button>
-    <button class="btn btn-primary" style="color: whitesmoke" type="button" onclick="window.location.href='/'">Back to Start</button>
-    <button class="btn btn-primary" style="color: whitesmoke" type="button" onclick="window.location.href='/chart'">Refresh Data</button>
-</form>
-<br>
-<form id="searchForm" method="get" action="/chart">
-    <div class="input-group mb-3" id="urlForm">
-        <input class="form-control" type="text" name="searchQuery" placeholder="Search...">
-        <input type="hidden" name="ordered" value="{{.Ordered}}">
-        <input type="hidden" name="orderDir" value="{{.OrderDir}}">
-        <button class="btn btn-primary" style="color: whitesmoke" type="submit">Search</button>
-    </div>
-</form>
+    <body style="background-color: #2b2a33; color: whitesmoke">
+        <h1>LSF Wochenplan IfP</h1>
+        <h2>{{ .Semester}}</h2>
+        <br />
+        <form id="downloadForm">
+            <button
+                class="btn btn-primary"
+                style="color: whitesmoke"
+                type="button"
+                onclick="saveFile()"
+            >
+                Save ODS File
+            </button>
+            <button
+                class="btn btn-primary"
+                style="color: whitesmoke"
+                type="button"
+                onclick="window.location.href='/'"
+            >
+                Back to Start
+            </button>
+            <button
+                class="btn btn-primary"
+                style="color: whitesmoke"
+                type="button"
+                onclick="window.location.href='/chart'"
+            >
+                Refresh Data
+            </button>
+        </form>
+        <br />
+        <form id="searchForm" method="get" action="/chart">
+            <div class="input-group mb-3" id="urlForm">
+                <input
+                    class="form-control"
+                    type="text"
+                    name="searchQuery"
+                    placeholder="Search..."
+                />
+                <input type="hidden" name="ordered" value="{{.Ordered}}" />
+                <input type="hidden" name="orderDir" value="{{.OrderDir}}" />
+                <button
+                    class="btn btn-primary"
+                    style="color: whitesmoke"
+                    type="submit"
+                >
+                    Search
+                </button>
+            </div>
+        </form>
 
-<br>
-<br>
-<table class="table table-hover table-bordered table-dark">
-    <thead>
-        <tr>
-            <th><h4><a href="/chart?ordered=0&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Tag</a></h4></th>
-            <th><h4><a href="/chart?ordered=1&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Zeit</a></h4></th>
-            <th><h4><a href="/chart?ordered=2&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Veranstaltung</a></h4></th>
-            <th><h4><a href="/chart?ordered=3&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Lehrende</a></h4></th>
-            <th><h4><a href="/chart?ordered=4&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Raum</a></h4></th>
-            <th><h4><a href="/chart?ordered=5&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">Module</a></h4></th>
-            <th><h4><a href="/chart?ordered=6&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}">VRMB</a></h4></th>
-        </tr>
-    </thead>
-    {{range .Lectures}}
-    <tr>
-        <td>{{.Day}}</td>
-        <td>{{.Time}} Uhr</td>
-        <td><a href="{{.Link}}">{{.Title}}</a></td>
-        <td>{{.Lecturers}}</td>
-        <td>{{.Room}}</td>
-        <td>{{range .Modules}}
-            {{.}}
-        {{end}}</td>
-        <td>{{.Flags}}</td>
-    </tr>
-    {{end}}
-</table>
+        <br />
+        <br />
+        <table class="table table-hover table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=0&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >Tag</a
+                            >
+                        </h4>
+                    </th>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=1&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >Zeit</a
+                            >
+                        </h4>
+                    </th>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=2&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >Veranstaltung</a
+                            >
+                        </h4>
+                    </th>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=3&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >Lehrende</a
+                            >
+                        </h4>
+                    </th>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=4&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >Raum</a
+                            >
+                        </h4>
+                    </th>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=5&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >Module</a
+                            >
+                        </h4>
+                    </th>
+                    <th>
+                        <h4>
+                            <a
+                                href="/chart?ordered=6&orderDir={{.OrderDir}}&lastOrdered={{.Ordered}}"
+                                >VRMB</a
+                            >
+                        </h4>
+                    </th>
+                </tr>
+            </thead>
+            {{range .Lectures}}
+            <tr>
+                <td>{{.Day}}</td>
+                <td>{{.Time}} Uhr</td>
+                <td><a href="{{.Link}}">{{.Title}}</a></td>
+                <td>{{.Lecturers}}</td>
+                <td>{{.Room}}</td>
+                <td>{{range .Modules}} {{.}} {{end}}</td>
+                <td>{{.Flags}}</td>
+            </tr>
+            {{end}}
+        </table>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
-        integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
-        crossorigin="anonymous"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
+            integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
+            crossorigin="anonymous"
+        ></script>
 
-<script>
-    function saveFile() {
-        fetch('/download')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.text();
-            })
-            .then(data => {
-                console.log('File downloaded successfully');
-            })
-            .catch(error => {
-                console.error('There was a problem with the fetch operation:', error);
-            });
-    }
-</script>
-</body>
+        <script>
+            function saveFile() {
+                fetch("/download")
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.text();
+                    })
+                    .then((data) => {
+                        console.log("File downloaded successfully");
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "There was a problem with the fetch operation:",
+                            error,
+                        );
+                    });
+            }
+        </script>
+    </body>
 </html>
