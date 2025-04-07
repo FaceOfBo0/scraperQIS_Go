@@ -19,8 +19,8 @@ func replaceIdx(str string, replacement string, index int) string {
 	return str[:index] + replacement + str[index+1:]
 }
 
-// saveJsonToFile saves the JSON string to a specified file.
-func saveJsonToFile(jsonStr, filePath string) error {
+// saveStrToFile saves the JSON string to a specified file.
+func saveStrToFile(jsonStr, filePath string) error {
 	// Open the file for writing, create it if it doesn't exist
 	file, err := os.Create(filePath)
 	if err != nil {

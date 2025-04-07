@@ -121,7 +121,7 @@ func RunServer() {
 			return
 		}
 
-		err = saveJsonToFile(string(lecsJson), "lectures.json")
+		err = saveStrToFile(string(lecsJson), "lectures.json")
 		if err != nil {
 			fmt.Printf("error saving JSON to file: %v\n", err)
 			return
@@ -148,7 +148,7 @@ func RunServer() {
 		olatColumn, _ := strconv.Atoi(r.FormValue("olat"))
 
 		// Get the file from form data
-		file, _, err := r.FormFile("file")
+		file, header, err := r.FormFile("file")
 		if err != nil {
 			fmt.Printf("Error retrieving file: %v\n", err)
 			http.Error(rw, "Error retrieving file", http.StatusBadRequest)
@@ -157,9 +157,14 @@ func RunServer() {
 		defer file.Close()
 
 		catInfos := getCatInfos(file, titleColumn, olatColumn)
+		catStrings := mapList(catInfos, func(ci CatalogInfo) string {
+			return fmt.Sprintf("%v\n%v\n%v", ci.lecTitle, ci.lecLink, ci.olatLink)
+		})
+		catStr := strings.Join(catStrings, "\n\n")
 
-		for i, v := range catInfos {
-			fmt.Printf("%v: %v\n", i, v)
+		fname := strings.TrimSuffix(header.Filename, ".xlsx") + ".txt"
+		if err := saveStrToFile(catStr, fname); err != nil {
+			panic(err)
 		}
 	}
 
