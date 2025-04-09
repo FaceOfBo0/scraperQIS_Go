@@ -41,19 +41,26 @@ func getCatInfos(reader io.Reader, titleCol, olatCol int) []CatalogInfo {
 		}
 	}()
 
-	sheetName := f.GetSheetMap()[1]
-	rows, _ := f.GetRows(sheetName)
+	for _, v := range f.GetSheetMap() {
+		sheetName := v
+		rows, _ := f.GetRows(sheetName)
 
-	for i := range len(rows) {
-		cell_title, _ := excelize.CoordinatesToCellName(titleCol, i+1)
-		cell_olat, _ := excelize.CoordinatesToCellName(olatCol, i+1)
-		if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
-			if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
-				lec_title, _ := f.GetCellValue(sheetName, cell_title)
-				infos = append(infos, CatalogInfo{lecTitle: lec_title, lecLink: link, olatLink: olat})
+		for i := range len(rows) {
+			cell_title, _ := excelize.CoordinatesToCellName(titleCol, i+1)
+			cell_olat, _ := excelize.CoordinatesToCellName(olatCol, i+1)
+			if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
+				if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
+					lec_title, _ := f.GetCellValue(sheetName, cell_title)
+					infos = append(infos, CatalogInfo{lecTitle: strings.Replace(lec_title, "\n ", "", -1), lecLink: link, olatLink: olat})
+				}
 			}
 		}
+
+		if len(infos) != 0 {
+			break
+		}
 	}
+
 	return infos
 }
 
