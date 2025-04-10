@@ -1,2 +1,5 @@
 .DS_Store
 scraperQIS_Go.exe
+*.ods
+*.xlsx
+*.json

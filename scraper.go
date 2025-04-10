@@ -51,7 +51,7 @@ func getCatInfos(reader io.Reader, titleCol, olatCol int) []CatalogInfo {
 			if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
 				if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
 					lec_title, _ := f.GetCellValue(sheetName, cell_title)
-					infos = append(infos, CatalogInfo{lecTitle: strings.Replace(lec_title, "\n ", "", -1), lecLink: link, olatLink: olat})
+					infos = append(infos, CatalogInfo{lecTitle: strings.Replace(lec_title, "\n", "", -1), lecLink: link, olatLink: olat})
 				}
 			}
 		}

@@ -163,9 +163,12 @@ func RunServer() {
 		catStr := strings.Join(catStrings, "\n\n")
 
 		fname := strings.TrimSuffix(header.Filename, ".xlsx") + ".txt"
-		if err := saveStrToFile(catStr, fname); err != nil {
-			panic(err)
-		}
+		// if err := saveStrToFile(catStr, fname); err != nil {
+		// 	panic(err)
+		// }
+		rw.Header().Set("Content-Disposition", "attachment; filename="+fname)
+		rw.Header().Set("Content-Type", "text/plain")
+		rw.Write([]byte(catStr))
 	}
 
 	// Bind handler functions and start server

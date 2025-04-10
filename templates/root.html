@@ -53,7 +53,7 @@
                         type="submit"
                         style="color: whitesmoke"
                     >
-                        Plan laden
+                        Load
                     </button>
                 </div>
             </div>
@@ -88,39 +88,11 @@
                     type="submit"
                     style="color: whitesmoke"
                 >
-                    Datei hochladen
+                    Save File
                 </button>
             </div>
         </form>
 
-        <script>
-            document
-                .querySelector('form[action="/catalog"]')
-                .addEventListener("submit", function (e) {
-                    e.preventDefault(); // Prevent normal form submission
-
-                    let formData = new FormData(this);
-
-                    fetch("/catalog", {
-                        method: "POST",
-                        body: formData,
-                    })
-                        .then((response) => {
-                            if (!response.ok) {
-                                alert("Error uploading file");
-                            } else {
-                                // Clear the form inputs if needed
-                                // document.getElementById("titleInp").value = "";
-                                // document.getElementById("olatInp").value = "";
-                                // document.getElementById("fileInput").value = "";
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error:", error);
-                            alert("Error uploading file");
-                        });
-                });
-        </script>
         <script
             src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
             integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
