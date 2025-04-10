@@ -1,5 +1,5 @@
 .DS_Store
-scraperQIS_Go.exe
+*.exe
 *.ods
 *.xlsx
 *.json

@@ -157,10 +157,10 @@ func RunServer() {
 		defer file.Close()
 
 		catInfos := getCatInfos(file, titleColumn, olatColumn)
-		catStrings := mapList(catInfos, func(ci CatalogInfo) string {
-			return fmt.Sprintf("%v\n%v\n%v", ci.lecTitle, ci.lecLink, ci.olatLink)
+		catStrings := mapList(catInfos, func(ci CatalogInfo, idx int) string {
+			return fmt.Sprintf("%v\n\n%v\n\n%v\n\n%v", idx+1, ci.lecTitle, ci.lecLink, ci.olatLink)
 		})
-		catStr := strings.Join(catStrings, "\n\n")
+		catStr := strings.Join(catStrings, "\n\n\n")
 
 		fname := strings.TrimSuffix(header.Filename, ".xlsx") + ".txt"
 		// if err := saveStrToFile(catStr, fname); err != nil {

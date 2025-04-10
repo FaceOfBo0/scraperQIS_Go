@@ -121,7 +121,7 @@ func newLecture(text string, url string) Lecture {
 	}
 
 	lec.Modules = lec.modulesPattern.FindAllString(lec.TextRaw, -1)
-	lec.Modules = mapList(lec.Modules, func(elem string) string { return strings.ReplaceAll(elem, " ", "") })
+	lec.Modules = mapList(lec.Modules, func(elem string, idx int) string { return strings.ReplaceAll(elem, " ", "") })
 	slices.SortFunc(lec.Modules, compareModule)
 	lec.Modules = slices.Compact(lec.Modules)
 	if len(lec.Modules) == 0 {

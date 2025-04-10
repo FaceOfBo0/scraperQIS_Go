@@ -7,10 +7,10 @@ type Tuple[V, U any] struct {
 	snd U
 }
 
-func mapList[I, O any](list []I, fn func(I) O) []O {
+func mapList[I, O any](list []I, fn func(I, int) O) []O {
 	outList := make([]O, len(list))
 	for i, elem := range list {
-		outList[i] = fn(elem)
+		outList[i] = fn(elem, i)
 	}
 	return outList
 }
