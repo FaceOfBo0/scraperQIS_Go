@@ -42,12 +42,11 @@
         <h1>LSF Wochenplan IfP</h1>
         <h2>{{ .Semester}}</h2>
         <br />
-        <form id="downloadForm">
+        <form id="downloadForm" action="/download" method="post">
             <button
                 class="btn btn-primary"
                 style="color: whitesmoke"
-                type="button"
-                onclick="saveFile()"
+                type="submit"
             >
                 Save ODS
             </button>
@@ -171,7 +170,7 @@
             crossorigin="anonymous"
         ></script>
 
-        <script>
+        <!-- <script>
             function saveFile() {
                 fetch("/download")
                     .then((response) => {
@@ -190,6 +189,7 @@
                         );
                     });
             }
-        </script>
+
+        </script> -->
     </body>
 </html>

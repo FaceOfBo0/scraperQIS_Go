@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"os/exec"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -115,6 +115,7 @@ func RunServer() {
 	}
 
 	downloadRoute := func(rw http.ResponseWriter, r *http.Request) {
+
 		lecsJson, err := json.MarshalIndent(&scr.lectures, "", "    ")
 		if err != nil {
 			fmt.Printf("error with json serialization: %v\n", err)
@@ -131,7 +132,22 @@ func RunServer() {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		rw.WriteHeader(http.StatusOK)
+
+		// Create the filename and read the generated ODS file
+		sem := strings.Replace(scr.lectures[0].Semester, "/", "_", -1)
+		odsFilename := "Wochenplan " + sem + ".ods"
+
+		odsData, err := os.ReadFile(odsFilename)
+		if err != nil {
+			http.Error(rw, "Error reading ODS file", http.StatusInternalServerError)
+			return
+		}
+
+		// Set headers for file download
+		rw.Header().Set("Content-Disposition",
+			fmt.Sprintf("attachment; filename=%s", odsFilename))
+		rw.Header().Set("Content-Type", "application/vnd.oasis.opendocument.spreadsheet")
+		rw.Write(odsData)
 	}
 
 	catalogRoute := func(rw http.ResponseWriter, r *http.Request) {
@@ -144,8 +160,8 @@ func RunServer() {
 		r.ParseMultipartForm(10 << 20)
 
 		// Get form values
-		titleColumn, _ := strconv.Atoi(r.FormValue("title"))
-		olatColumn, _ := strconv.Atoi(r.FormValue("olat"))
+		titleColumn := r.FormValue("title")
+		olatColumn := r.FormValue("olat")
 
 		// Get the file from form data
 		file, header, err := r.FormFile("file")

@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -27,7 +28,7 @@ type Scraper struct {
 	lectures []Lecture
 }
 
-func getCatInfos(reader io.Reader, titleCol, olatCol int) []CatalogInfo {
+func getCatInfos(reader io.Reader, titleCol, olatCol string) []CatalogInfo {
 	infos := make([]CatalogInfo, 0)
 
 	f, err := excelize.OpenReader(reader)
@@ -46,8 +47,8 @@ func getCatInfos(reader io.Reader, titleCol, olatCol int) []CatalogInfo {
 		rows, _ := f.GetRows(sheetName)
 
 		for i := range len(rows) {
-			cell_title, _ := excelize.CoordinatesToCellName(titleCol, i+1)
-			cell_olat, _ := excelize.CoordinatesToCellName(olatCol, i+1)
+			cell_title := titleCol + strconv.Itoa(i+1)
+			cell_olat := olatCol + strconv.Itoa(i+1)
 			if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
 				if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
 					lec_title, _ := f.GetCellValue(sheetName, cell_title)
