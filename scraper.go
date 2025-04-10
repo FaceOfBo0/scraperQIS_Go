@@ -13,9 +13,10 @@ import (
 )
 
 type CatalogInfo struct {
-	lecTitle string
-	lecLink  string
-	olatLink string
+	lecTitle    string
+	lecLecturer string
+	lecLink     string
+	olatLink    string
 }
 
 type Semester struct {
@@ -47,13 +48,25 @@ func getCatInfos(reader io.Reader, titleCol, olatCol string) []CatalogInfo {
 		rows, _ := f.GetRows(sheetName)
 
 		for i := range len(rows) {
-			cell_title := titleCol + strconv.Itoa(i+1)
-			cell_olat := olatCol + strconv.Itoa(i+1)
-			if ok, link, _ := f.GetCellHyperLink(sheetName, cell_title); ok {
-				if ok, olat, _ := f.GetCellHyperLink(sheetName, cell_olat); ok {
-					lec_title, _ := f.GetCellValue(sheetName, cell_title)
-					lec_title = strings.Replace(lec_title, "\n", "", -1)
-					infos = append(infos, CatalogInfo{lecTitle: lec_title, lecLink: link, olatLink: olat})
+			cellTitle := titleCol + strconv.Itoa(i+1)
+			cellOlat := olatCol + strconv.Itoa(i+1)
+			cellLecturer := ""
+
+			if titleCol == "B" {
+				cellLecturer = "C"
+			} else {
+				cellLecturer = "D"
+			}
+			cellLecturer += strconv.Itoa(i + 1)
+
+			if ok, link, _ := f.GetCellHyperLink(sheetName, cellTitle); ok {
+				if ok, olat, _ := f.GetCellHyperLink(sheetName, cellOlat); ok {
+					lec_title, _ := f.GetCellValue(sheetName, cellTitle)
+					lec_lecturer, _ := f.GetCellValue(sheetName, cellLecturer)
+
+					lec_title = strings.TrimSpace(strings.Replace(lec_title, "\n", "", -1))
+					lec_lecturer = strings.TrimSpace(lec_lecturer)
+					infos = append(infos, CatalogInfo{lecTitle: lec_title, lecLecturer: lec_lecturer, lecLink: link, olatLink: olat})
 				}
 			}
 		}

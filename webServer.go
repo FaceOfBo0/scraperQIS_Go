@@ -175,7 +175,7 @@ func RunServer() {
 
 		catInfos := getCatInfos(file, titleColumn, olatColumn)
 		catStrings := mapList(catInfos, func(ci CatalogInfo, idx int) string {
-			return fmt.Sprintf("%v\n\n%v\n\n%v\n\n%v", idx+1, ci.lecTitle, ci.lecLink, ci.olatLink)
+			return fmt.Sprintf("%v\n\n%v, %v\n\n%v\n\n%v", idx+1, ci.lecTitle, ci.lecLecturer, ci.lecLink, ci.olatLink)
 		})
 		catStr := strings.Join(catStrings, "\n\n\n")
 
