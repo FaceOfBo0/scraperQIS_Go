@@ -142,6 +142,7 @@ func RunServer() {
 			http.Error(rw, "Error reading ODS file", http.StatusInternalServerError)
 			return
 		}
+		defer os.Remove(odsFilename)
 
 		// Set headers for file download
 		rw.Header().Set("Content-Disposition",
