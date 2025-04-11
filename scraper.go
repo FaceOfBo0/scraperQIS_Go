@@ -24,7 +24,7 @@ type Semester struct {
 }
 
 type Scraper struct {
-	Semester, Url, SemesterUrl string
+	Semester, Url, SemesterUrl, offset string
 	//lecturesLinks []string
 	lectures []Lecture
 }
@@ -132,6 +132,7 @@ func (s *Scraper) createUrlOffset() {
 			"&idcol=k_semester.semid&idval=" + year + half +
 			"&purge=n&getglobal=semester"
 		s.Url += offset
+		s.offset = offset
 	}
 }
 
@@ -148,6 +149,7 @@ func (s *Scraper) loadLectures() {
 		defer wg.Done()
 		link := sel.Find("a").AttrOr("href", "")
 		if link != "" {
+			link += s.offset
 			lecturesChan <- newLecture(getHtmlText(link), link)
 		}
 	}
